@@ -100,7 +100,25 @@ There must somewhere be a "fainted" modifier - I can't seem to revive isaac simp
 the djinn recovery counters get messed up by setting new djinn in battle. 
 they can count down multiple djinn simultaneously.. so likely binary encoding of which djinn are in which status, it just gets processed? 
 would mean recovery is a two byte value though 
-and during battle I can have 3 djinn on standbyb and it sayd that in the 
+and during battle I can have 3 djinn on standby and it said that in the 
+there is some memory/order to how the djinn were put on standby in the first place - where is that stored?
+
+hypothesis:
+- FALSE: there is a "binary encoding of all djinn with 1 turn left" variable. tested. also doesn't work since djinn of multiple elements recover in sequence on the same character.
+- FALSE: there is a "flint recovery status" variable that counts down matching the recovery timer count
+
+experiment: set a bunch of djinn into standby order venus then jupiter. then do a jupiter summon, then do a venus summon. the jupiter djinn on isaac goes first, then the venus in order. on ivan, the jupiter djinn also go first, then the venus. so... hypothesis that cross-element recovery prioritization is not tracked/used until the recovery state is entered?
+
+experiment: if transfer two djinn is their set order preserved? No! only preserved within a single character.
+
+### Knowns
+- in the character struct, djinn *within each element* represented as bits in a binary number (2 byte for GS1, 4 byte for TLA)
+- djinn remember when they are placed in `standby` state, because they `recover` in sequence
+- djinn in `recovery` state return to `set` at one djinn per *character* per turn, even if the djinn are of different elements. 
+- djinn in `recovery` state cannot be traded to other characters
+- djinn in `standby` can be traded to other characters.. but this does mess up their `recovery` queue ordering (reverts to natural order?)
+- djinn on character X may be summoned (trigger `standby` -> `recovery`) by character Y
+
 
 ## Battle State
 byte `0x6aa8104` seems to be 1 when waiting for action input, 0 when not (battle progressing, smash A)
