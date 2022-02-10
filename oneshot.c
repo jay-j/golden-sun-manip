@@ -5,6 +5,7 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/uio.h>
+#include <stddef.h> // for offsetof()
 
 #include "golden_sun.h"
 
@@ -51,6 +52,23 @@ uint8_t battle_menu(pid_t pid, uint8_t* start_ptr){
   return result;
  }
  
+
+// print what address to punch in PINCE to manipulate djinn data
+void print_djinn_aid(uint8_t* game_ptr){
+  // heap_start + offset_to_isaac + offset_to_djinn
+
+  for (size_t i=0; i<4; ++i){
+    printf("character base location = %p\n", game_ptr + sizeof(Unit)*i);
+
+    printf("djinn venus have (binary) = %p\n", game_ptr + offsetof(struct Unit, djinn_venus_have) + sizeof(Unit)*i);
+    printf("djinn venus set  (binary) = %p\n", game_ptr + offsetof(struct Unit, djinn_venus_set) + sizeof(Unit)*i);
+
+    printf("djinn venus qty total = %p\n", game_ptr + offsetof(struct Unit, djinn_venus_qty_total) + sizeof(Unit)*i);
+    printf("djinn venus qty set   = %p\n", game_ptr + offsetof(struct Unit, djinn_venus_qty_set) + sizeof(Unit)*i);
+  }
+
+ }
+
 
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n){
   printf("looking for %s...\n", needle);
@@ -152,11 +170,14 @@ uint8_t* find_characters(pid_t pid){
   }
 
   size_t offset = found_p1 - buff_full; // heap plus this many bytes is where the character data is
-  printf("offset! %ld\n", offset);
+  printf("offset! %ld bytes from heap start to character_1 data\n", offset);
 
   free(buff_full);
 
   uint8_t* game_ptr = target_ptr + offset;
+  
+  print_djinn_aid(game_ptr);
+
   return game_ptr;
 }
 
@@ -167,6 +188,8 @@ int main(int argc, char* argv[]){
     printf("Usage: sudo ./scan 1234\n");
   }
 
+  printf("character array is size.... %ld\n", sizeof(Unit));
+
   // try and convert into pid
   pid_t pid = atoi(argv[1]);
   assert(pid != 0);
@@ -175,15 +198,19 @@ int main(int argc, char* argv[]){
   // use the party data as the game origin.. because why not?
   uint8_t* game_ptr = find_characters(pid);
 
-  printf("character array is size.... %ld\n", sizeof(Unit));
-
   uint8_t* target_ptr = game_ptr; // (void*) 0x6af16f0;
   Unit allies[4]; 
   get_unit_data(pid, target_ptr, allies, 4);
-
   for(int i=0; i<4; ++i){
     printf("character: %s    health: %u   status: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
+    printf("      venus  : %u    %u    %u    %u\n", allies[i].djinn_venus_have, allies[i].djinn_venus_set, allies[i].djinn_venus_qty_total, allies[i].djinn_venus_qty_set);
+    printf("      mercury: %u    %u    %u    %u\n", allies[i].djinn_mercury_have, allies[i].djinn_mercury_set, allies[i].djinn_mercury_qty_total, allies[i].djinn_mercury_qty_set);
+    printf("      mars   : %u    %u    %u    %u\n", allies[i].djinn_mars_have, allies[i].djinn_mars_set, allies[i].djinn_mars_qty_total, allies[i].djinn_mars_qty_set);
+    printf("      jupiter: %u    %u    %u    %u\n", allies[i].djinn_jupiter_have, allies[i].djinn_jupiter_set, allies[i].djinn_jupiter_qty_total, allies[i].djinn_jupiter_qty_set);
+
+
   }
+  
 
   Unit enemies[5];
   get_unit_data(pid, target_ptr+MEMORY_OFFSET_ENEMY, enemies, 5);
@@ -193,7 +220,6 @@ int main(int argc, char* argv[]){
 
   printf("isaac unknown stuff\n");
   golden_sun_print_unknowns(allies);
-
 
   uint8_t ready = battle_menu(pid, game_ptr);
   printf("Battle menu? %u\n", ready);
