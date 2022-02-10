@@ -17,7 +17,7 @@ typedef struct{
 
 typedef uint16_t djinn;
 
-typedef struct {
+typedef struct Unit {
   char name[15];
   uint8_t level;
   uint16_t health_base; 
