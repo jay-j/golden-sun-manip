@@ -131,3 +131,5 @@ Confirmed - those 4th byte is the status. Not cleared if not in use. `ff` if sta
 ## Battle State
 byte `0x6aa8104` seems to be 1 when waiting for action input, 0 when not (battle progressing, smash A)
 In this example the heap start is `0x0644d000`. That's 199508 bytes after Isaac (player 1) start.
+
+Djinn are in the character struct are >1 byte values. thus the layout in memory is read in an inverted manner by C; 0x 00 00 03 00 becomes 186608. 
