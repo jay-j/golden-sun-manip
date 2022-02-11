@@ -119,6 +119,14 @@ experiment: if transfer two djinn is their set order preserved? No! only preserv
 - djinn in `standby` can be traded to other characters.. but this does mess up their `recovery` queue ordering (reverts to natural order?)
 - djinn on character X may be summoned (trigger `standby` -> `recovery`) by character Y
 
+From Salanewt: 
+> When a djinni is changed from Set to Standby/Recovery, it gets added to the recovery queue. In the GBA games, the recovery queue is stored at #02000254 and each entry takes up 4 bytes. An entry has the owner's ID, the djinni's ID (ranging from 0-14 in hex), element (0-3), and state (FF for standby, or else a duration for recovery). Immediately after this list is a number that keeps track of the djinn currently in the recovery queue.
+
+That memory address is from the start of WRAM. WRAM is emulated RAM from the original device. But where is this emulated RAM within my emulator? 
+
+According to [this forum post](https://gamefaqs.gamespot.com/boards/468548-golden-sun/36988652?page=8) `wram 0x2000250` is coins, and WRAM starts at `0x2000000`. Use this to find the start of wram? Currently my coins are showing up in PINCE at `0x6e7b480`. The current Isaac base location is `0x6e7b730`.. 688 bytes later! So Isaac is then 688 + 0x250 = 1280 bytes after the start of `WRAM 0x2000000`. At this address... (currently `0x6E7B230`) is the string Isaac! Save file name? 
+
+Confirmed - those 4th byte is the status. Not cleared if not in use. `ff` if standby, `fe` during summon casting, some positive value (`02`, `03`, etc.) for turn countdown. 
 
 ## Battle State
 byte `0x6aa8104` seems to be 1 when waiting for action input, 0 when not (battle progressing, smash A)

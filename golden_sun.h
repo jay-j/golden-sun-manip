@@ -143,6 +143,31 @@ typedef struct Unit {
 
 } Unit;
 
+
+typedef struct Djinn_Queue_Item {
+  // the element of the djinn
+  // 00=venus, 01=mercury, 02=mars, 03=jupiter
+  uint8_t element;
+
+  // zero-indexed djinn serial number within element (not the binary encoding used in character data)
+  uint8_t djinn; 
+
+  // independent of current party order TODO check TLA
+  // 00=Isaac, 01=Garet, 02=Ivan, 03=Mia 
+  uint8_t owner;
+
+  // ff = standby, positive values are turns/ordering during recovery
+  uint8_t status;
+} Djinn_Queue_Item;
+
+// starting at WRAM 0x02000254
+#define MEMORY_OFFSET_DJINN_QUEUE 0x254
+typedef Djinn_Queue_Item Djinn_Queue[64]; // TODO not enough for the full TLA party?
+
+// queue counter is 256 bytes after queue start (0x02000354)
+#define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354
+
+
 #pragma pack(pop)
 
 
