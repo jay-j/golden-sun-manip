@@ -15,8 +15,7 @@ typedef struct{
   uint8_t status;
 } Item;
 
-typedef uint32_t Djinn;
-
+#define ALLIES 4
 #define MEMORY_OFFSET_ALLIES 0x500
 #define MEMORY_OFFSET_ENEMY 0x30878
 typedef struct Unit {
@@ -65,15 +64,15 @@ typedef struct Unit {
   Psyenergy psy[32];
   Item item[15];
 
-  Djinn djinn_venus_have;
-  Djinn djinn_mercury_have;
-  Djinn djinn_mars_have;
-  Djinn djinn_jupiter_have;
+  uint32_t djinn_venus_have;
+  uint32_t djinn_mercury_have;
+  uint32_t djinn_mars_have;
+  uint32_t djinn_jupiter_have;
 
-  Djinn djinn_venus_set;
-  Djinn djinn_mercury_set;
-  Djinn djinn_mars_set;
-  Djinn djinn_jupiter_set;
+  uint32_t djinn_venus_set;
+  uint32_t djinn_mercury_set; 
+  uint32_t djinn_mars_set;
+  uint32_t djinn_jupiter_set;
 
   uint8_t _unknown4[2];
 
@@ -156,7 +155,8 @@ typedef struct Djinn_Queue_Item {
 
 // starting at WRAM 0x02000254
 #define MEMORY_OFFSET_DJINN_QUEUE 0x254
-typedef Djinn_Queue_Item Djinn_Queue[64]; // TODO not enough for the full TLA party?
+#define DJINN_QUEUE_MAX_LENGTH 64
+typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough for the full TLA party?
 
 // queue counter is 256 bytes after queue start (0x02000354)
 #define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354

@@ -8,6 +8,7 @@
 #include <stddef.h> // for offsetof()
 
 #include "golden_sun.h"
+#include "golden_sun_export.h"
 
 // https://stackoverflow.com/questions/63669606/reading-memory-of-another-process-in-c-without-ptrace-in-linux
 // use these functions to read and write without requiring the process to pause
@@ -32,6 +33,16 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
 
   ssize_t n_read = process_vm_readv(pid, local, unit_n, remote, 1, 0);
   assert(n_read == unit_n*sizeof(Unit));
+
+  // fix the endian-ness of the djinn
+  for (size_t i=0; i<unit_n; ++i){
+    for (size_t e=0; e<4; ++e){
+      uint32_t* dj = &units[i].djinn_venus_have + e;
+      *dj = djinn_to_x86(*dj);
+      dj = &units[i].djinn_venus_set + e;
+      *dj = djinn_to_x86(*dj);
+    }
+  }
 }
 
 uint8_t battle_menu(pid_t pid, uint8_t* wram_ptr){
@@ -64,6 +75,13 @@ void print_djinn_aid(uint8_t* wram_ptr){
 
     printf("djinn venus qty total = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_qty_total) + sizeof(Unit)*i);
     printf("djinn venus qty set   = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_qty_set) + sizeof(Unit)*i);
+
+    /*
+    printf("djinn jupiter have (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_have) + sizeof(Unit)*i);
+    printf("djinn jupiter set  (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_set) + sizeof(Unit)*i);
+    printf("djinn jupiter qty total = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_qty_total) + sizeof(Unit)*i);
+    printf("djinn jupiter qty set   = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_qty_set) + sizeof(Unit)*i);
+    */
   }
 
  }
@@ -169,11 +187,12 @@ uint8_t* find_wram(pid_t pid){
   }
 
   size_t offset = found_p1 - buff_full; // heap plus this many bytes is where the character data is
-  printf("offset! %ld bytes from heap start to character_1 data\n", offset);
+  // printf("offset! %ld bytes from heap start to character_1 data\n", offset);
 
   free(buff_full);
 
   uint8_t* game_ptr = target_ptr + offset - 1280; // 1280 is offset in bytes from the character to start of WRAM in GS1
+  printf("WRAM located at %p\n", game_ptr);
   //print_djinn_aid(game_ptr);
 
   return game_ptr;
@@ -201,10 +220,10 @@ int main(int argc, char* argv[]){
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
   for(int i=0; i<4; ++i){
     printf("character: %s    health: %u   status: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
-    printf("      venus  : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_venus_have, allies[i].djinn_venus_set, allies[i].djinn_venus_qty_total, allies[i].djinn_venus_qty_set);
-    printf("      mercury: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mercury_have, allies[i].djinn_mercury_set, allies[i].djinn_mercury_qty_total, allies[i].djinn_mercury_qty_set);
-    printf("      mars   : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mars_have, allies[i].djinn_mars_set, allies[i].djinn_mars_qty_total, allies[i].djinn_mars_qty_set);
-    printf("      jupiter: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_jupiter_have, allies[i].djinn_jupiter_set, allies[i].djinn_jupiter_qty_total, allies[i].djinn_jupiter_qty_set);
+    //printf("      venus  : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_venus_have, allies[i].djinn_venus_set, allies[i].djinn_venus_qty_total, allies[i].djinn_venus_qty_set);
+    //printf("      mercury: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mercury_have, allies[i].djinn_mercury_set, allies[i].djinn_mercury_qty_total, allies[i].djinn_mercury_qty_set);
+    //printf("      mars   : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mars_have, allies[i].djinn_mars_set, allies[i].djinn_mars_qty_total, allies[i].djinn_mars_qty_set);
+    //printf("      jupiter: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_jupiter_have, allies[i].djinn_jupiter_set, allies[i].djinn_jupiter_qty_total, allies[i].djinn_jupiter_qty_set);
   }
 
   Unit enemies[5];
@@ -213,11 +232,14 @@ int main(int argc, char* argv[]){
     printf("enemy: %s        health: %u    status: %u\n", enemies[i].name, enemies[i].health_current, enemies[i].battle_status);
   }
 
-  printf("isaac unknown stuff\n");
-  golden_sun_print_unknowns(allies);
+  //printf("isaac unknown stuff\n");
+  //golden_sun_print_unknowns(allies);
 
   uint8_t ready = battle_menu(pid, wram_ptr);
   printf("Battle menu? %u\n", ready);
+
+  Export_Djinn ed;
+  export_djinn(pid, wram_ptr, allies, ed);
 
   return 0;
 }

@@ -131,11 +131,11 @@ typedef struct Export_Djinn_List{
 
 typedef Export_Djinn_List Export_Djinn[4];
 
-uint32_t arm_to_x86(uint32_t x){
+uint32_t djinn_to_x86(uint32_t x){
   // reverse order of bytes
   // same order of bits within the byte
-  uint8_t* byte = &x;
-  uint32_t result = (byte[0]) + (byte[1] << 1) + (byte[2] << 2);
+  uint8_t* byte = (uint8_t*) &x;
+  uint32_t result = (byte[2]) + (byte[1] << 1) + (byte[0] << 2);
   return result;
 }
 
@@ -146,18 +146,18 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
   for (size_t i=0; i<ALLIES; ++i){
     Unit* ally = allies + i;
     printf("Processing Djinn for %s\n", ally->name);
-    printf(" venus: %u\n", ally->djinn_venus_have);
-    printf(" mercury: %u\n", ally->djinn_mercury_have);
-    printf(" mars: %u\n", ally->djinn_mars_have);
-    printf(" jupiter: %u\n", ally->djinn_jupiter_have);
+    printf(" (venus: %u  ", ally->djinn_venus_have);
+    printf("mercury: %u  ", ally->djinn_mercury_have);
+    printf("mars: %u  ", ally->djinn_mars_have);
+    printf("jupiter: %u)\n", ally->djinn_jupiter_have);
 
     export_djinn[i].quantity = 0;
 
     // for each element - this drives order!
     for (uint8_t e=0; e<4; ++e){
-      //printf("  element %u\n", e);
       uint8_t qty = *( &ally->djinn_venus_qty_total + e);
       uint32_t this_element = *( &ally->djinn_venus_have + e);
+      //printf("  element %u expect quantity %u\n", e, qty);
 
       // for each djinn. within elements these are sorted by the byte order of their id
       // searching for options in the correct order means they are pre-placed in my list in the right order
@@ -201,8 +201,8 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
   for (uint32_t q=0; q<queue_length; ++q){
     printf("Queue!  element:%u  djinn:%u  owner:%u  status:%u ", queue[q].element, queue[q].djinn, queue[q].owner, queue[q].status);
 
-    uint32_t djinn_id = 0x40000;
-    djinn_id = djinn_id >> queue[q].djinn;
+    uint32_t djinn_id = 0x1;
+    djinn_id = djinn_id << queue[q].djinn;
 
     printf(" djinn_id = %u\n", djinn_id);
     // find that djinn id in the player+element combo, then store the status data
