@@ -18,18 +18,10 @@ typedef struct ExportAlly{
   uint16_t agility_base;
   uint8_t luck_base;
 
-  uint16_t power_venus_base;
-  uint16_t resistance_venus_base;
-  uint16_t power_mercury_base;
-  uint16_t resistance_mercury_base;
-  uint16_t power_mars_base;
-  uint16_t resistance_mars_base;
-  uint16_t power_jupiter_base;
-  uint16_t resistance_jupiter_base;
+  ElementalAffinity elemental_base[ELEMENTS];
   
   uint16_t health_max;
   uint16_t pp_max;
-
   uint16_t health_current;
   uint16_t pp_current;
 
@@ -38,14 +30,7 @@ typedef struct ExportAlly{
   uint16_t agility_max;
   uint8_t luck_max;
 
-  uint16_t power_venus_max; 
-  uint16_t resistance_venus_max;
-  uint16_t power_mercury_max;
-  uint16_t resistance_mercury_max;
-  uint16_t power_mars_max;
-  uint16_t resistance_mars_max;
-  uint16_t power_jupiter_max;
-  uint16_t resistance_jupiter_max;
+  ElementalAffinity elemental_max[ELEMENTS];
 
   Psyenergy psy[32];
 
@@ -54,10 +39,7 @@ typedef struct ExportAlly{
   // all the following are battle status stuff
   uint8_t battle_status;     // 00 if dead, 01 if alive enemy, 02 if alive ally
   uint8_t defending;         // defending or granite djinn
-  uint8_t boost_power_venus;  // qty is how many djinn
-  uint8_t boost_power_mercury; // qty is how many djinn
-  uint8_t boost_power_mars;   // qty is how many djinn
-  uint8_t boost_power_jupiter; // qty is how many djinn
+  uint8_t boost_power[ELEMENTS];  // qty is how many djinn
   uint8_t cursed_item;
   uint8_t poisoned;
   uint8_t boost_attack_duration;
@@ -100,10 +82,10 @@ void export_copy_ally(Unit* unit, ExportAlly* send){
   memcpy(&send->attack_base, &unit->attack_base, offsetof(struct Unit, _unknown2) - offsetof(struct Unit, attack_base));
 
   // power_venus_base thru luck_max
-  memcpy(&send->power_venus_base, &unit->power_venus_base, offsetof(struct Unit, _unknown3) - offsetof(struct Unit, power_venus_base));
+  memcpy(&send->elemental_base, &unit->elemental_base, offsetof(struct Unit, _unknown3) - offsetof(struct Unit, elemental_base));
 
   // power_venus_max thru psyenergy
-  memcpy(&send->power_venus_max, &unit->power_venus_max, offsetof(struct Unit, item) - offsetof(struct Unit, power_venus_max));
+  memcpy(&send->elemental_max, &unit->elemental_max, offsetof(struct Unit, item) - offsetof(struct Unit, elemental_max));
 
   // class through end
   memcpy(&send->class, &unit->class, offsetof(struct Unit, _unknown10) - offsetof(struct Unit, class));
@@ -142,9 +124,9 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
     export_djinn[i].quantity = 0;
 
     // for each element - this drives order!
-    for (uint8_t e=0; e<4; ++e){
-      uint8_t qty = *( &ally->djinn_venus_qty_total + e);
-      uint32_t this_element = *( &ally->djinn_venus_have + e);
+    for (uint8_t e=0; e<ELEMENTS; ++e){
+      uint8_t qty = ally->djinn_qty_total[e];
+      uint32_t this_element = ally->djinn_have[e];
       //printf("  element %u expect quantity %u\n", e, qty);
 
       // for each djinn. within elements these are sorted by the byte order of their id

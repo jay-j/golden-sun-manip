@@ -3,6 +3,12 @@
 
 #include <stdint.h>
 
+#define ELEMENTS 4
+#define ELEMENT_VENUS 0
+#define ELEMENT_MERCURY 1
+#define ELEMENT_MARS 2
+#define ELEMENT_JUPITER 3
+
 #pragma pack(push, 1)
 typedef struct {
   uint8_t spell;
@@ -14,6 +20,11 @@ typedef struct{
   uint8_t item;
   uint8_t status;
 } Item;
+
+typedef struct{
+  uint16_t power;
+  uint16_t resistance;
+} ElementalAffinity;
 
 #define ALLIES 4
 #define MEMORY_OFFSET_ALLIES 0x500
@@ -30,18 +41,10 @@ typedef struct Unit {
   uint8_t luck_base;
   uint8_t _unknown2[5];
 
-  uint16_t power_venus_base;
-  uint16_t resistance_venus_base;
-  uint16_t power_mercury_base;
-  uint16_t resistance_mercury_base;
-  uint16_t power_mars_base;
-  uint16_t resistance_mars_base;
-  uint16_t power_jupiter_base;
-  uint16_t resistance_jupiter_base;
+  ElementalAffinity elemental_base[ELEMENTS]; // power, resistance
   
   uint16_t health_max;
   uint16_t pp_max;
-
   uint16_t health_current;
   uint16_t pp_current;
 
@@ -52,39 +55,16 @@ typedef struct Unit {
 
   uint8_t _unknown3[5];
 
-  uint16_t power_venus_max; 
-  uint16_t resistance_venus_max;
-  uint16_t power_mercury_max;
-  uint16_t resistance_mercury_max;
-  uint16_t power_mars_max;
-  uint16_t resistance_mars_max;
-  uint16_t power_jupiter_max;
-  uint16_t resistance_jupiter_max;
+  ElementalAffinity elemental_max[ELEMENTS]; // power, resistance
 
   Psyenergy psy[32];
   Item item[15];
 
-  uint32_t djinn_venus_have;
-  uint32_t djinn_mercury_have;
-  uint32_t djinn_mars_have;
-  uint32_t djinn_jupiter_have;
-
-  uint32_t djinn_venus_set;
-  uint32_t djinn_mercury_set; 
-  uint32_t djinn_mars_set;
-  uint32_t djinn_jupiter_set;
-
+  uint32_t djinn_have[ELEMENTS];
+  uint32_t djinn_set[ELEMENTS];
   uint8_t _unknown4[2];
-
-  uint8_t djinn_venus_qty_total;
-  uint8_t djinn_mercury_qty_total;
-  uint8_t djinn_mars_qty_total;
-  uint8_t djinn_jupiter_qty_total;
-
-  uint8_t djinn_venus_qty_set;
-  uint8_t djinn_mercury_qty_set;
-  uint8_t djinn_mars_qty_set;
-  uint8_t djinn_jupiter_qty_set;
+  uint8_t djinn_qty_total[ELEMENTS];
+  uint8_t djinn_qty_set[ELEMENTS];
 
   uint8_t _unknown5[4];
 
@@ -93,15 +73,11 @@ typedef struct Unit {
   uint8_t _unknown6[1]; 
 
   uint8_t class;
-  
 
   // all the following are battle status stuff
   uint8_t battle_status;     // 00 if dead, 01 if alive enemy, 02 if alive ally
   uint8_t defending;         // defending or granite djinn
-  uint8_t boost_power_venus;  // qty is how many djinn
-  uint8_t boost_power_mercury; // qty is how many djinn
-  uint8_t boost_power_mars;   // qty is how many djinn
-  uint8_t boost_power_jupiter; // qty is how many djinn
+  uint8_t boost_power[ELEMENTS];  // qty is how many djinn
   uint8_t cursed_item;
   uint8_t poisoned;
   uint8_t boost_attack_duration;

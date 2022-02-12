@@ -32,9 +32,9 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
   // fix the endian-ness of the djinn
   for (size_t i=0; i<unit_n; ++i){
     for (size_t e=0; e<4; ++e){
-      uint32_t* dj = &units[i].djinn_venus_have + e;
+      uint32_t* dj = &units[i].djinn_have[e];
       *dj = djinn_to_x86(*dj);
-      dj = &units[i].djinn_venus_set + e;
+      dj = &units[i].djinn_set[e];
       *dj = djinn_to_x86(*dj);
     }
   }
@@ -65,11 +65,11 @@ void print_djinn_aid(uint8_t* wram_ptr){
     printf("character base location = %p\n", unit_ptr + sizeof(Unit)*i);
     printf("health current location = %p\n", unit_ptr + offsetof(struct Unit, health_current) + sizeof(Unit)*i);
 
-    printf("djinn venus have (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_have) + sizeof(Unit)*i);
-    printf("djinn venus set  (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_set) + sizeof(Unit)*i);
+    printf("djinn venus have (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_have) + sizeof(Unit)*i);
+    printf("djinn venus set  (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_set) + sizeof(Unit)*i);
 
-    printf("djinn venus qty total = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_qty_total) + sizeof(Unit)*i);
-    printf("djinn venus qty set   = %p\n", unit_ptr + offsetof(struct Unit, djinn_venus_qty_set) + sizeof(Unit)*i);
+    printf("djinn venus qty total = %p\n", unit_ptr + offsetof(struct Unit, djinn_qty_total) + sizeof(Unit)*i);
+    printf("djinn venus qty set   = %p\n", unit_ptr + offsetof(struct Unit, djinn_qty_set) + sizeof(Unit)*i);
 
     /*
     printf("djinn jupiter have (binary) = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_have) + sizeof(Unit)*i);
