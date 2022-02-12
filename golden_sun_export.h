@@ -109,18 +109,12 @@ void export_copy_ally(Unit* unit, ExportAlly* send){
   memcpy(&send->class, &unit->class, offsetof(struct Unit, _unknown10) - offsetof(struct Unit, class));
 }
 
-// chararacter 1
-//      djinn 1
-//            element
-//            status
-//            id
-//     djinn 2
-//
 
+// information about each djinn
 typedef struct Export_Djinn_Item {
   uint8_t element;
-  uint8_t status; // 0=set
-  uint32_t id; // binary encoding of the djinn id TODO check size
+  uint8_t status; // 0=set, small positive=recovery, 255=standby
+  uint32_t id; // binary encoded, unique per element
 } Export_Djinn_Item;
 
 // djinn element order is venus, mercury, mars, jupiter
@@ -129,15 +123,9 @@ typedef struct Export_Djinn_List{
   Export_Djinn_Item djinn[9];
 } Export_Djinn_List;
 
+// a djinn list for every character
 typedef Export_Djinn_List Export_Djinn[4];
 
-uint32_t djinn_to_x86(uint32_t x){
-  // reverse order of bytes
-  // same order of bits within the byte
-  uint8_t* byte = (uint8_t*) &x;
-  uint32_t result = (byte[2]) + (byte[1] << 1) + (byte[0] << 2);
-  return result;
-}
 
 // deconfuse djinn from wram, write it in a memory blob to send
 void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn){
@@ -145,11 +133,11 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
   // look at characters to figure out how many djinn they have
   for (size_t i=0; i<ALLIES; ++i){
     Unit* ally = allies + i;
-    printf("Processing Djinn for %s\n", ally->name);
-    printf(" (venus: %u  ", ally->djinn_venus_have);
-    printf("mercury: %u  ", ally->djinn_mercury_have);
-    printf("mars: %u  ", ally->djinn_mars_have);
-    printf("jupiter: %u)\n", ally->djinn_jupiter_have);
+    // printf("Processing Djinn for %s\n", ally->name);
+    // printf(" (venus: %u  ", ally->djinn_venus_have);
+    // printf("mercury: %u  ", ally->djinn_mercury_have);
+    // printf("mars: %u  ", ally->djinn_mars_have);
+    // printf("jupiter: %u)\n", ally->djinn_jupiter_have);
 
     export_djinn[i].quantity = 0;
 
@@ -171,7 +159,7 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
           export_djinn[i].djinn[export_djinn[i].quantity + qty_found].status = 0; // detect standby/recovery later
           export_djinn[i].djinn[export_djinn[i].quantity + qty_found].id = this_djinn;
           ++qty_found;
-          printf("    found element %u, status %u, id %u\n", e, 0, this_djinn);
+          //printf("    found element %u, status %u, id %u\n", e, 0, this_djinn);
         }
         ++d;
         assert( d < 31);
@@ -195,16 +183,15 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
 
   ssize_t n_read = process_vm_readv(pid, local, 2, remote, 1, 0);
   assert(n_read == remote[0].iov_len);
-  printf("copied memory with djinn queue data. there are %u in queue\n", queue_length);
+  //printf("copied memory with djinn queue data. there are %u in queue\n", queue_length);
 
   // process the recovery queue - figure out which character and element and djinn, and set the recovery status in my structure 
   for (uint32_t q=0; q<queue_length; ++q){
-    printf("Queue!  element:%u  djinn:%u  owner:%u  status:%u ", queue[q].element, queue[q].djinn, queue[q].owner, queue[q].status);
+    //printf("Queue!  element:%u  djinn:%u  owner:%u  status:%u\n", queue[q].element, queue[q].djinn, queue[q].owner, queue[q].status);
 
     uint32_t djinn_id = 0x1;
     djinn_id = djinn_id << queue[q].djinn;
 
-    printf(" djinn_id = %u\n", djinn_id);
     // find that djinn id in the player+element combo, then store the status data
     for (uint8_t d=0; d<export_djinn[queue[q].owner].quantity; ++d){
       if (djinn_id == export_djinn[queue[q].owner].djinn[d].id){
@@ -216,17 +203,14 @@ void export_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn expor
     }
   }
 
-
+  // debug only - print the results!
   for(size_t i=0; i<ALLIES; ++i){
     Unit* ally = allies+i;
     Export_Djinn_List* list = export_djinn+i;
-
     printf("Djinn Status for %s, they have %u djinn\n", ally->name, list->quantity);
-
     for(size_t d=0; d<list->quantity; ++d){
       printf("  djinn:%u   element:%u   status:%u\n", list->djinn[d].id, list->djinn[d].element, list->djinn[d].status);
     }
-   
   }
 
 }

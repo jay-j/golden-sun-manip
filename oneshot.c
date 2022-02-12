@@ -10,11 +10,6 @@
 #include "golden_sun.h"
 #include "golden_sun_export.h"
 
-// https://stackoverflow.com/questions/63669606/reading-memory-of-another-process-in-c-without-ptrace-in-linux
-// use these functions to read and write without requiring the process to pause
-// process_vm_readv()
-// process_vm_writev()
-
 // assumes name limit of 5 characters
 #define NAME_P1 "Isaac"
 #define NAME_P2 "Garet"
@@ -83,12 +78,11 @@ void print_djinn_aid(uint8_t* wram_ptr){
     printf("djinn jupiter qty set   = %p\n", unit_ptr + offsetof(struct Unit, djinn_jupiter_qty_set) + sizeof(Unit)*i);
     */
   }
-
- }
+}
 
 
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n){
-  printf("looking for %s...\n", needle);
+  //printf("looking for %s...\n", needle);
 
   char* haystack = haystack_start; // current
   char* haystack_end = haystack_start + haystack_n;
@@ -113,7 +107,7 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
   }
 
   return haystack;
- }
+}
 
 
 // look through the entire heap memory of this process to find where the allied characters are
@@ -130,7 +124,7 @@ uint8_t* find_wram(pid_t pid){
   fgets_status = fgets(line_raw, sizeof(line_raw), fd_map);
   while (fgets_status != NULL){
     if (strstr(line_raw, "[heap]") != NULL){
-      printf("found the heap line!\n%s", line_raw);
+      printf("heap line in /proc/[pid]/maps: %s", line_raw);
       break;
     }
     fgets_status = fgets(line_raw, sizeof(line_raw), fd_map);
@@ -140,12 +134,12 @@ uint8_t* find_wram(pid_t pid){
   char* line_working = line_raw;
   char* heap_start_str = strtok_r(line_working, "-", &line_working);
   char* heap_end_str = strtok_r(line_working, " ", &line_working);
-  printf("the heap goes from 0x%s to 0x%s\n", heap_start_str, heap_end_str);
+  printf("  the heap goes from 0x%s to 0x%s\n", heap_start_str, heap_end_str);
 
   uint64_t heap_start = strtol(heap_start_str, NULL, 16);
   uint64_t heap_end = strtol(heap_end_str, NULL, 16);
   uint64_t heap_length = heap_end - heap_start;
-  printf("heap! %ld to %ld  (%ld)\n", heap_start, heap_end, heap_length);
+  printf("  %ld to %ld  (%ld)\n", heap_start, heap_end, heap_length);
   fclose(fd_map);
 
   // now look for that area in /proc/$pid/mem 
@@ -171,14 +165,14 @@ uint8_t* find_wram(pid_t pid){
   while (search_complete == 0){
     found_p1 = strstr_n(buff, buff_end - buff, NAME_P1, 5);
     assert(found_p1 != NULL);
-    printf("Found %s at %p\n", NAME_P1, found_p1);
+    //printf("Found %s at %p\n", NAME_P1, found_p1);
 
     found_p2 = strstr_n(buff, buff_end - buff, NAME_P2, 5);
-    printf("Found %s at %p\n", NAME_P2, found_p2);
+    //printf("Found %s at %p\n", NAME_P2, found_p2);
     assert(found_p2 != NULL);
 
     if (found_p2 - found_p1 == sizeof(Unit)){
-      printf("search complete!\n");
+      //printf("search complete!\n");
       search_complete = 1;
     }
     else{
@@ -187,7 +181,6 @@ uint8_t* find_wram(pid_t pid){
   }
 
   size_t offset = found_p1 - buff_full; // heap plus this many bytes is where the character data is
-  // printf("offset! %ld bytes from heap start to character_1 data\n", offset);
 
   free(buff_full);
 
@@ -199,7 +192,6 @@ uint8_t* find_wram(pid_t pid){
 }
 
 
-
 int main(int argc, char* argv[]){
   if (argc != 2){
     printf("Usage: sudo ./scan 1234\n");
@@ -208,22 +200,18 @@ int main(int argc, char* argv[]){
   printf("character array is size.... %ld\n", sizeof(Unit));
   assert(sizeof(Unit) == 332);
 
-  // try and convert into pid
+  // try and convert command line argument into pid
   pid_t pid = atoi(argv[1]);
   assert(pid != 0);
   printf("got process pid %d\n", pid);
 
-  // use the party data as the game origin.. because why not?
+  // start of wram is the origin
   uint8_t* wram_ptr = find_wram(pid);
 
   Unit allies[4]; 
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
   for(int i=0; i<4; ++i){
     printf("character: %s    health: %u   status: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
-    //printf("      venus  : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_venus_have, allies[i].djinn_venus_set, allies[i].djinn_venus_qty_total, allies[i].djinn_venus_qty_set);
-    //printf("      mercury: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mercury_have, allies[i].djinn_mercury_set, allies[i].djinn_mercury_qty_total, allies[i].djinn_mercury_qty_set);
-    //printf("      mars   : %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_mars_have, allies[i].djinn_mars_set, allies[i].djinn_mars_qty_total, allies[i].djinn_mars_qty_set);
-    //printf("      jupiter: %"PRIu32"    %"PRIu32"    %u    %u\n", allies[i].djinn_jupiter_have, allies[i].djinn_jupiter_set, allies[i].djinn_jupiter_qty_total, allies[i].djinn_jupiter_qty_set);
   }
 
   Unit enemies[5];

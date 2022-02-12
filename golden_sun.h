@@ -162,6 +162,14 @@ typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough
 #define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354
 
 
+// binary encoding stored djinn have an endian issue, fix it here
+uint32_t djinn_to_x86(uint32_t x){
+  uint8_t* byte = (uint8_t*) &x;
+  uint32_t result = (byte[2]) + (byte[1] << 1) + (byte[0] << 2);
+  return result;
+}
+
+
 #pragma pack(pop)
 
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
