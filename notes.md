@@ -82,7 +82,7 @@ the start of character data is *not* some constant offset from mednafen start be
 - each character, any possible action (except items), include defense (want waiting to heal on lesser monsters to be a good strategy)
 - how to train on action space since the options will change as a result of the state (class)
 - the psyenergy list only shows what you HAVE NOW, not what you could have if you changed your class with the djinn you have. so this makes a good list of the currently available options. seems to be ordered as it is ordered in the battle menu (danger - some are not battle psyenergies). 
-
+- the actions all have targets as well. 
 
 ## Enemy Stuff
 Ascii characters. Width is 332 bytes! First entry is the one on the left.

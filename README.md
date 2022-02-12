@@ -18,4 +18,15 @@ Many (all?) significant values are stored at static memory addresses within `WRA
 - Process djinn stats to represent true action space?
 - Process psyenergy list to remove utiltiy-only psyenergies
 - Condense battle stats structs to remove empty data
-- Check data structures against TLA. 
+- Check data structures against TLA. Apparently there are changes..
+
+# State Space
+## Allies
+- Everything
+- REMOVE: unknowns except battle status, items, djinn, experience, name
+## Djinn
+- per character structure; list of djinn, ordered as they will appear in the menu
+- each djinn says element, id, status_counter (0 for set, 0xff..0xf0 for standby, 0x01...0x04 for recovery, etc.).
+## Enemy
+- Everything
+- REMOVE: unknowns except battle status, items, djinn, experience, name
