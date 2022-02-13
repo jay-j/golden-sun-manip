@@ -133,3 +133,35 @@ byte `0x6aa8104` seems to be 1 when waiting for action input, 0 when not (battle
 In this example the heap start is `0x0644d000`. That's 199508 bytes after Isaac (player 1) start.
 
 Djinn are in the character struct are >1 byte values. thus the layout in memory is read in an inverted manner by C; 0x 00 00 03 00 becomes 186608. 
+
+wram `0x6c59cb0`. Then `0x6c8f8b8` and `0x6c8f8bc` show horizontal big selection in the battle menu (run vs flee vs status.. and attack thru defend etc.). 
+
+And they are crazy values during other pa
+if ((XQueryPointer (display, root_window, &root_ret,
+&child_ret, &root_x, &rorts of the battle? Yes, but not good enough - still just zero when enemies initially show up. 
+
+When enemies show up, they do appear in memory first! So the enemy memory structure shows how many times A has to be pushed to advance to start the battle. 
+
+Push A twice in between battles... 
+
+End of battle.. watch the enemy status. After sum(enemy status) goes to zero, push A once to get past 'party goes down' text, that's it. Then are out of battle, push A twice to restart. 
+
+## Sending Commands
+https://tronche.com/gui/x/xlib/event-handling/XSendEvent.html
+https://stackoverflow.com/questions/1262310/simulate-keypress-in-a-linux-c-console-application
+http://t-sato.in.coocan.jp/xvkbd/events.html
+- seems like from this I could be able to select a specific window to send the keypress event to
+
+https://stackoverflow.com/questions/68852436/how-xtestfakekeyevent-combines-events
+- has some code for using the XSendEvent() interface
+https://stackoverflow.com/questions/34704200/xsendevent-not-working
+
+
+seems the problem will be identifying the true window
+https://ubuntuforums.org/archive/index.php/t-570702.html
+
+pass through will also be an issue - how to send keypresses to my application for logging purposes, but end up with keypresses in the game also?
+
+use xquerypointer() to find the window id under the pointer
+- maybe setup a state machine? run program, user hits keyboard button to lock onto the game window under the pointer and start things. Then user hits an end button to stop playing battle mode? 
+- also record own focus, in case need to restore focus back to the terminal application window?
