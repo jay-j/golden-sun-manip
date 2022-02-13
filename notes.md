@@ -165,3 +165,11 @@ pass through will also be an issue - how to send keypresses to my application fo
 use xquerypointer() to find the window id under the pointer
 - maybe setup a state machine? run program, user hits keyboard button to lock onto the game window under the pointer and start things. Then user hits an end button to stop playing battle mode? 
 - also record own focus, in case need to restore focus back to the terminal application window?
+
+https://groups.google.com/g/comp.windows.x/c/Ac2IKoCh1R8
+- Window is not the clear descriptor that I think it is. And programs may simply choose to ignore events sent by other programs. 
+
+Looked at a bunch of memory addresses. Seems there's nothing within GS (at least on initial checks) that I can activate to send keyboard pushes just by changing memory states.
+
+Set *all* the identified values at the same time (during game pause?) also not successful. 
+
