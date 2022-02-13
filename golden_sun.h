@@ -1,3 +1,4 @@
+// these are how the game stores things in ram; in general don't modify
 #ifndef GOLDEN_SUN_H
 #define GOLDEN_SUN_H
 
@@ -133,74 +134,11 @@ typedef struct Djinn_Queue_Item {
 #define MEMORY_OFFSET_DJINN_QUEUE 0x254
 #define DJINN_QUEUE_MAX_LENGTH 64
 typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough for the full TLA party?
-
 // queue counter is 256 bytes after queue start (0x02000354)
 #define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354
 
-
-// binary encoding stored djinn have an endian issue, fix it here
-uint32_t djinn_to_x86(uint32_t x){
-  uint8_t* byte = (uint8_t*) &x;
-  uint32_t result = (byte[2]) + (byte[1] << 1) + (byte[0] << 2);
-  return result;
-}
-
-
-#pragma pack(pop)
-
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
-// TODO write function to parse the djinn structs
-
-// todo write unknowns array. with memory pointer offset and number of bytes. so I can just loop through all of them.
-typedef struct {
-  size_t offset;
-  size_t length;
-} Unknown;
-
-Unknown unknowns[10];
-
-void golden_sun_print_unknowns(Unit* unit){
-
-  // todo populate unknowns array somewhere else..
-  unknowns[0].offset = 20;
-  unknowns[0].length = 4;
-  unknowns[1].offset = 31;
-  unknowns[1].length = 5;
-  unknowns[2].offset = 67;
-  unknowns[2].length = 5;
-
-  // not sure about this one, it is adjacent to the djinn section
-  unknowns[3].offset = 278;
-  unknowns[3].length = 2;
-
-  // back to zero clue
-  unknowns[4].offset = 288;
-  unknowns[4].length = 4;
-  unknowns[5].offset = 296;
-  unknowns[5].length = 1;
-  
-  // some kind of battle status
-  unknowns[6].offset = 313;
-  unknowns[6].length = 1;
-  unknowns[7].offset = 318;
-  unknowns[7].length = 2;
-  unknowns[8].offset = 322;
-  unknowns[8].length = 2;
-
-  // end stuff no idea
-  unknowns[9].offset = 328;
-  unknowns[9].length = 4;
-
-
-  for (size_t i=0; i<10; ++i){
-    printf("Unknown %ld:  ", i);
-    for (size_t j=0; j<unknowns[i].length; ++j){
-      uint8_t* ptr = (uint8_t*) unit;
-      printf("%hhx  ", *(ptr+unknowns[i].offset+j)); // todo pre-padding? 
-    }
-    printf("\n");
-  }
-}
+#pragma pack(pop)
 
 #endif // header guard
