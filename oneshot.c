@@ -35,16 +35,14 @@ void print_djinn_aid(uint8_t* wram_ptr){
 
 int main(int argc, char* argv[]){
   if (argc != 2){
-    printf("Usage: sudo ./scan 1234\n");
+    printf("Usage: sudo ./scan\n");
   }
 
   printf("character array is size.... %ld\n", sizeof(Unit));
   assert(sizeof(Unit) == 332);
 
   // try and convert command line argument into pid
-  pid_t pid = atoi(argv[1]);
-  assert(pid != 0);
-  printf("got process pid %d\n", pid);
+  pid_t pid = find_pid();
 
   // start of wram is the origin
   uint8_t* wram_ptr = find_wram(pid);

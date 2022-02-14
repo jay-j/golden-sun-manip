@@ -44,6 +44,24 @@ uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+pid_t find_pid(){
+  char pidline[1024];
+  char* pid_str;  
+
+  FILE* fd = popen("pidof mednafen", "r");
+  char* result = fgets(pidline, 1024, fd);
+  assert(result != NULL);
+  pid_str = strtok(pidline, " ");
+
+  pid_t pid = atoi(pid_str); // ASSUME it is the first process with that name
+  assert(pid != 0);
+  printf("got mednafen process pid: %d\n", pid);
+
+  pclose(fd);
+  return pid;
+}
+
+
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n){
   //printf("looking for %s...\n", needle);
 

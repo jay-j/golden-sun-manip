@@ -21,6 +21,7 @@ uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr);
 #define NAME_P2 "Garet"
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n);
 uint8_t* find_wram(pid_t pid);
+pid_t find_pid();
 
 void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);
 
