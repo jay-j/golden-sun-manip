@@ -1,6 +1,6 @@
 COMMON=-O2 -Wall -pthread -g
-LIB=golden_sun.h golden_sun_utils.h memory_utils.h
-LIBOBJ=memory_utils.o golden_sun_utils.o
+LIB=golden_sun.h golden_sun_utils.h memory_utils.h loop_timer.h
+LIBOBJ=memory_utils.o golden_sun_utils.o loop_timer.o
 
 all: oneshot.bin keyboard_test.bin
 
