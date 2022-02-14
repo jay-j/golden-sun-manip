@@ -149,6 +149,8 @@ int main(int argc, char* argv[]){
         printf("  end passive watching of the battle.\n");
         state = STATE_BATTLE_CMD;
       }
+
+      // if all enemies are dead... go back to passthrough mode
     }
     // TODO there is some condition of enemy attacks where this logic doesn't work...?! :(
 
