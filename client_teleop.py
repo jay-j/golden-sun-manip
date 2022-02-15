@@ -10,7 +10,7 @@ import pygame
 
 # init pygame stuff
 pygame.init()
-window = pygame.display.set_mode((450, 30))
+window = pygame.display.set_mode((450, 60))
 clock = pygame.time.Clock()
 
 # init zmq comms
@@ -24,7 +24,7 @@ print("connection opened")
 def encode_button(buttons, value, index):
     buttons += (value << index)
     return buttons
-buttonlist = {pygame.K_a:0, pygame.K_s:1, pygame.K_a:2, pygame.K_d:3, pygame.K_k:4, pygame.K_j:5, pygame.K_n:6, pygame.K_m:7, pygame.K_q:8, pygame.K_e:9, pygame.K_t:10}
+buttonlist = {pygame.K_w:0, pygame.K_s:1, pygame.K_a:2, pygame.K_d:3, pygame.K_k:4, pygame.K_j:5, pygame.K_n:6, pygame.K_m:7, pygame.K_q:8, pygame.K_e:9, pygame.K_t:10}
 
 run = True
 while run:
