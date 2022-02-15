@@ -18,6 +18,7 @@
 #define STATE_BATTLE_INIT 1
 #define STATE_BATTLE_CMD 2
 #define STATE_BATTLE_WATCH 3
+#define STATE_BATTLE_END 4
 
 ///////////////////////////////////////////////////////////////////////////////////
 // TODO write function to convert whatever gets read 
@@ -31,10 +32,20 @@ void key_tap(Display* display, int keycode_sym){
   XFlush(display);
 }
 
+void key_press(Display* display, int keycode_sym){
+  unsigned int keycode = XKeysymToKeycode(display, keycode_sym);
+  XTestFakeKeyEvent(display, keycode, True, 0);
+}
+
+void key_release(Display* display, int keycode_sym){
+  unsigned int keycode = XKeysymToKeycode(display, keycode_sym);
+  XTestFakeKeyEvent(display, keycode, False, 0);
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
 #define TELEOP_COMMAND_MSG_SIZE 11
-struct {
+typedef struct {
   int8_t dpad_up;    // w; up 
   int8_t dpad_down;  // s; down
   int8_t dpad_left;  // a; left
@@ -46,23 +57,58 @@ struct {
   int8_t button_left;  // shoulder left
   int8_t button_right; // shoulder right
   int8_t battle_init; 
-} teleop_command;
+} Teleop_Command;
 
-void joystick(void* socket){
-  int rc = zmq_recv(socket, &teleop_command, TELEOP_COMMAND_MSG_SIZE, ZMQ_DONTWAIT);
+void joystick(void* socket, Teleop_Command* teleop_command){
+  int rc = zmq_recv(socket, teleop_command, TELEOP_COMMAND_MSG_SIZE, ZMQ_DONTWAIT);
 
-  // only assign data if a message was received
+  // only print debug data if a message was received
   if (rc != -1){
-    // TODO assign variables based on data in teleop_command object
-    printf("received teleop command\n");
+    uint8_t* ptr = (uint8_t*) teleop_command;
+    uint8_t change = 0;
+    for (size_t i=0; i<TELEOP_COMMAND_MSG_SIZE; ++i){
+      change |= *ptr;
+      ++ptr;
+    }
+
+    if (change > 0){
+      printf("received teleop command: ");
+      uint8_t* ptr = (uint8_t*) teleop_command;
+      for (size_t i=0; i<11; ++i){
+        printf("%u  ", *ptr);
+        ++ptr;
+      }
+      printf("\n");
+    }
     
   }
   else{
     // zero the teleop command structure; zero means no commands this cycle!
-    void* result = memset(&teleop_command, 0, TELEOP_COMMAND_MSG_SIZE);
+    void* result = memset(teleop_command, 0, TELEOP_COMMAND_MSG_SIZE);
     assert(result != NULL);
   }
 }
+
+
+void passthru(Display* display, Teleop_Command* teleop_command){
+  KeySym bmap[] = {XK_w, XK_s, XK_a, XK_d, XK_k, XK_j, XK_n, XK_m, XK_q, XK_e};
+  KeySym* key = bmap;
+  uint8_t* cmd = (uint8_t*) teleop_command;
+
+  for (size_t i=0; i<10; ++i){
+    if (*cmd == 1){
+      key_press(display, *key);
+    }
+    if (*cmd == 2){
+      key_release(display, *key);
+    }
+    ++key;
+    ++cmd;
+  }
+
+  XFlush(display);
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]){
@@ -89,7 +135,11 @@ int main(int argc, char* argv[]){
   zmq_setsockopt(server_socket, ZMQ_CONFLATE, &zmq_opt, sizeof zmq_opt);
   int zmq_status = zmq_bind(server_socket, "tcp://*:5555");
   assert(zmq_status == 0);
+  Teleop_Command teleop_command;
 
+  // make the golden sun data structures
+  Unit allies_raw[4];
+  Unit enemies_raw[5];
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
@@ -105,32 +155,46 @@ int main(int argc, char* argv[]){
   // record net battle commands
   // automatically exit battle mode once all enemies have been detected defeated
   //
-  int state = STATE_BATTLE_CMD;
+  int state = STATE_PASSTHRU;
   int battle_menu_previous = 0;
   int battle_menu_current = 0;
   for (;;){
     loop_frequency_delay(&tm);
 
     // zmq comms; get joystick data
-    joystick(server_socket);
+    // fills in the teleop_command struct
+    joystick(server_socket, &teleop_command);
+
+    // get data from golden sun
+    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, 4);
+    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, 5);
 
     battle_menu_previous = battle_menu_current;
     battle_menu_current = get_battle_menu(pid, wram_ptr);
 
     if (state == STATE_PASSTHRU){
+      printf("STATE:                PASSTHRU\n");
+      passthru(display, &teleop_command);
       // send keys on 1:1
       // listen to initialize battle mode
+      if (teleop_command.battle_init == 1){
+        state = STATE_BATTLE_INIT;
+      }
     } 
 
     if (state == STATE_BATTLE_INIT){
       // get the initial state; the enemy input data
       // advance to STATE_BATTLE_CMD
+      state = STATE_BATTLE_CMD;
     }
 
     if (state == STATE_BATTLE_CMD){
       printf("STATE:        CMD\n");
+      passthru(display, &teleop_command);
       // tricky! record the action state
       // TODO how to handle downed characters?
+      // TODO record current party order, re=arrange things from allies_raw
+      // TODO convert the action commands here into "psyenergy 1C" commands. if bot tries to give such a command and it is invalid, just defend instead
 
       // upon leaving this state, save the input action dataset
       if ((battle_menu_current == 0) && (battle_menu_previous == 1)){
@@ -141,8 +205,18 @@ int main(int argc, char* argv[]){
 
     if (state == STATE_BATTLE_WATCH){
       printf("STATE: WATCH\n");
-      // just mash A until the battle menu flag is once again detected
-      key_tap(display, XK_k);
+      // just mash B until the battle menu flag is once again detected
+      key_tap(display, XK_j);
+ 
+      for(int i=0; i<5; i++){
+        printf("%u  ", enemies_raw[i].health_current);
+      }
+      printf("\n");
+
+      // TODO make some new states for these conditions!
+
+      // put some lag in leaving this state? to capture the close ups? make new states for the close up situation? 
+      // has changed to command but only for a short time and enemy total health is > 0
 
       // upon leaving this state, save the battle ally+enemy dataset
       if ((battle_menu_current == 1) && (battle_menu_previous == 0)){
@@ -151,8 +225,19 @@ int main(int argc, char* argv[]){
       }
 
       // if all enemies are dead... go back to passthrough mode
+      if (health_total(enemies_raw, 5) == 0){
+        state = STATE_BATTLE_END;
+      }
     }
     // TODO there is some condition of enemy attacks where this logic doesn't work...?! :(
+
+    if (state == STATE_BATTLE_END){
+      printf("STATE: BATTLE ENDED!\n");
+      for(int i=0; i<3; ++i){
+        key_tap(display, XK_k); // TODO how many of these to finish the battle?
+      }
+      state = STATE_PASSTHRU;
+    }
 
   }
 

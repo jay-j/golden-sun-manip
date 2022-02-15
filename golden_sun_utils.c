@@ -71,3 +71,12 @@ void golden_sun_print_unknowns(Unit* unit){
     printf("\n");
   }
 }
+
+
+uint32_t health_total(Unit* units, size_t n){
+  uint32_t health = 0;
+  for (size_t i=0; i<n; ++i){
+    health += units[i].health_current;
+  }
+  return health;
+}

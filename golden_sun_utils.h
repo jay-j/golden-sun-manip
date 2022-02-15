@@ -102,5 +102,7 @@ void golden_sun_print_unknowns(Unit* unit);
 
 uint32_t djinn_to_x86(uint32_t x);
 
+uint32_t health_total(Unit* units, size_t n);
+
 #pragma pack(pop)
 #endif // header guards
