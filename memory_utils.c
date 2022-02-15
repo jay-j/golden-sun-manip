@@ -63,7 +63,7 @@ pid_t find_pid(){
 
 
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n){
-  //printf("looking for %s...\n", needle);
+  printf("looking for %s...\n", needle);
 
   char* haystack = haystack_start; // current
   char* haystack_end = haystack_start + haystack_n;
@@ -71,6 +71,9 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
   while (done == 0){
     // move the haystack to point at the first occurance of the first letter of the needle
     haystack = memchr(haystack, (int) needle[0], haystack_end - haystack);
+    if (haystack == NULL){
+      break;
+    }
 
     // see if the rest of the word follows
     if (memcmp(haystack, needle, needle_n) == 0){
@@ -143,25 +146,34 @@ uint8_t* find_wram(pid_t pid){
   char* buff_end = buff + heap_length;
   char* found_p1;
   char* found_p2;
-  while (search_complete == 0){
+  char* solution = NULL;
+  //while (search_complete == 0){
+  while (buff_end - buff > 800){
     found_p1 = strstr_n(buff, buff_end - buff, NAME_P1, 5);
+    if (found_p1 == NULL){
+      break;
+    }
     assert(found_p1 != NULL);
-    //printf("Found %s at %p\n", NAME_P1, found_p1);
+    printf("Found %s at %p\n", NAME_P1, found_p1);
 
     found_p2 = strstr_n(buff, buff_end - buff, NAME_P2, 5);
-    //printf("Found %s at %p\n", NAME_P2, found_p2);
+    printf("Found %s at %p\n", NAME_P2, found_p2);
     assert(found_p2 != NULL);
 
     if (found_p2 - found_p1 == sizeof(Unit)){
-      //printf("search complete!\n");
-      search_complete = 1;
+      printf("search complete!\n");
+      search_complete += 1;
+      solution = found_p1;
     }
-    else{
+    //else{
       buff = found_p1 + 1;
-    }
+    //}
   }
 
-  size_t offset = found_p1 - buff_full; // heap plus this many bytes is where the character data is
+  assert(solution != NULL);
+  printf("found %d solutions\n", search_complete);
+
+  size_t offset = solution - buff_full; // heap plus this many bytes is where the character data is
 
   free(buff_full);
 
