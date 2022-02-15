@@ -12,7 +12,6 @@ Many (all?) significant values are stored at static memory addresses within `WRA
 
 # TODO
 - Constant background monitoring
-  - Automatically detect process pid. `$pidof mednafen`
   - service: provide game state on request
   - service: advance battle on request
 - Process djinn stats to represent true action space?
@@ -30,3 +29,20 @@ Many (all?) significant values are stored at static memory addresses within `WRA
 ## Enemy
 - Everything
 - REMOVE: unknowns except battle status, items, djinn, experience, name
+
+
+# Implementation
+A virtual machine (wow.. antiX seems fast!) runs the emulator, which runs the game. A ZeroMQ bridge puts the user teleop interface (and later bot) outside the virtual machine.
+
+## Dependencies - Virtual Machine
+- mednafen 1.2.9 (emulator.. others likely possible with modification)
+- build-essential
+- libxtst-dev (for -lXtst). will bring in other x11-dev dependencies
+- libzmq3-dev (for zmq compile libraries)
+
+Setup network between host and virtual machine. I use VirtualBox's `NAT` interface (isolated single vm-to-host). Port forwarding setup is from host IP address (on the normal local network.. 192.168...) port 5555 to client internal reported IP address (10.0.2.15 for some reason) port 5555. 
+
+## Dependencies - Host Machine
+- `pip install pyzmq` for comms
+- `pip install pygame` for teleop training keyboard input
+

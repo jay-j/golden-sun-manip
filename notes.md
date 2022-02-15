@@ -173,3 +173,18 @@ Looked at a bunch of memory addresses. Seems there's nothing within GS (at least
 
 Set *all* the identified values at the same time (during game pause?) also not successful. 
 
+## 
+Issue with the battle menu number. Freezes in "window zoom in" scenarios, either by ally attack or by enemy attack. 
+
+## issue with memory
+finding memory approach doesn't work in the virtual environment. it seems that I need the *last* copy of Isaac-Garet 332 bytes? Vs. the first? And there are many copies of that unit structure throughout the game's memory - how to find the correct one?
+If I use the last one, then everything else does seem to fall into place...
+
+## VM Setup
+Want to setup the NAT approach. 10.0.1.1 and 10.1.10... unique network between the host and a single VM instance.
+
+(not "NAT network")
+
+## pygame keys
+https://www.pygame.org/docs/ref/key.html
+
