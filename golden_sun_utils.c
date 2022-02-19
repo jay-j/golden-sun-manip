@@ -1,6 +1,5 @@
 #include "golden_sun_utils.h"
 
-
 // copy from game-wram Unit structure to the more concise game state structure ally
 void export_copy_ally(Unit* unit, ExportAlly* send){
   // level thru pp_base
@@ -19,6 +18,28 @@ void export_copy_ally(Unit* unit, ExportAlly* send){
   memcpy(&send->class, &unit->class, offsetof(struct Unit, _unknown10) - offsetof(struct Unit, class));
 }
 
+
+void export_copy_enemy(Unit* unit, ExportEnemy* send){
+  // level thru pp_base
+  memcpy(send, &unit->level, offsetof(struct Unit, _unknown1) - offsetof(struct Unit, level) );
+
+  // attack_base thru luck_base
+  memcpy(&send->attack_base, &unit->attack_base, offsetof(struct Unit, _unknown2) - offsetof(struct Unit, attack_base));
+
+  // power_venus_base thru luck_max
+  memcpy(&send->elemental_base, &unit->elemental_base, offsetof(struct Unit, _unknown3) - offsetof(struct Unit, elemental_base));
+
+  // elemental collision maxes only
+  memcpy(&send->elemental_max, &unit->elemental_max, offsetof(struct Unit, psy) - offsetof(struct Unit, elemental_max));
+
+  // class through end
+  memcpy(&send->class, &unit->class, offsetof(struct Unit, _unknown10) - offsetof(struct Unit, class));
+}
+  
+void print_data_ally(ExportAlly* ally){
+  printf("Level: %u   Class: %u\n", ally->level, ally->class);
+  printf("Health: %u / %u     PP: %u / %u\n", ally->health_current, ally->health_max, ally->pp_current, ally->pp_max);
+}
 
 // binary encoding stored djinn have an endian issue, fix it here
 uint32_t djinn_to_x86(uint32_t x){

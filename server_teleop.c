@@ -21,10 +21,6 @@
 #define STATE_BATTLE_END 4
 
 ///////////////////////////////////////////////////////////////////////////////////
-// TODO write function to convert whatever gets read 
-// TODO how to handle key *holds* not just individual presses? 
-// have independent event handling for push and release
-
 void key_tap(Display* display, int keycode_sym){
   unsigned int keycode = XKeysymToKeycode(display, keycode_sym);
   XTestFakeKeyEvent(display, keycode, True, 0);
@@ -140,6 +136,8 @@ int main(int argc, char* argv[]){
   // make the golden sun data structures
   Unit allies_raw[4];
   Unit enemies_raw[5];
+  ExportAlly allies_send[4];
+  ExportEnemy enemies_send[5];
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
@@ -168,14 +166,18 @@ int main(int argc, char* argv[]){
     // get data from golden sun
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, 4);
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, 5);
-
     battle_menu_previous = battle_menu_current;
     battle_menu_current = get_battle_menu(pid, wram_ptr);
 
+    // make nice states to send
+    export_copy_ally(allies_raw, allies_send);
+    export_copy_enemy(enemies_raw, enemies_send);
+
     if (state == STATE_PASSTHRU){
-      printf("STATE:                PASSTHRU\n");
-      passthru(display, &teleop_command);
+      // printf("STATE:                PASSTHRU\n");
       // send keys on 1:1
+      passthru(display, &teleop_command);
+
       // listen to initialize battle mode
       if (teleop_command.battle_init == 1){
         state = STATE_BATTLE_INIT;
@@ -183,13 +185,25 @@ int main(int argc, char* argv[]){
     } 
 
     if (state == STATE_BATTLE_INIT){
+      for (size_t i=0; i<4; i++){
+        export_copy_ally(allies_raw+i, allies_send+i);
+        print_data_ally(allies_send+i);
+      }
+
+      for (size_t i=0; i<5; i++){
+        export_copy_enemy(enemies_raw+i, enemies_send+i);
+      }
+      
+
       // get the initial state; the enemy input data
       // advance to STATE_BATTLE_CMD
-      state = STATE_BATTLE_CMD;
+      if (teleop_command.button_right == 1){
+        state = STATE_BATTLE_CMD;
+      }
     }
 
     if (state == STATE_BATTLE_CMD){
-      printf("STATE:        CMD\n");
+      // printf("STATE:        CMD\n");
       passthru(display, &teleop_command);
       // tricky! record the action state
       // TODO how to handle downed characters?
@@ -221,7 +235,7 @@ int main(int argc, char* argv[]){
       // upon leaving this state, save the battle ally+enemy dataset
       if ((battle_menu_current == 1) && (battle_menu_previous == 0)){
         printf("  end passive watching of the battle.\n");
-        state = STATE_BATTLE_CMD;
+        state = STATE_BATTLE_INIT;
       }
 
       // if all enemies are dead... go back to passthrough mode

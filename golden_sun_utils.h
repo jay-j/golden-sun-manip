@@ -74,6 +74,70 @@ typedef struct ExportAlly{
 } ExportAlly;
 
 void export_copy_ally(Unit* unit, ExportAlly* send);
+void print_data_ally(ExportAlly* ally);
+
+typedef struct ExportEnemy{
+  uint8_t level;
+  uint16_t health_base; 
+  uint16_t pp_base;
+  uint16_t attack_base;
+  uint16_t defense_base;
+  uint16_t agility_base;
+  uint8_t luck_base;
+
+  ElementalAffinity elemental_base[ELEMENTS];
+  
+  uint16_t health_max;
+  uint16_t pp_max;
+  uint16_t health_current;
+  uint16_t pp_current;
+
+  uint16_t attack_max;
+  uint16_t defense_max;
+  uint16_t agility_max;
+  uint8_t luck_max;
+
+  ElementalAffinity elemental_max[ELEMENTS];
+
+  uint8_t class;
+  
+  // all the following are battle status stuff
+  uint8_t battle_status;     // 00 if dead, 01 if alive enemy, 02 if alive ally
+  uint8_t defending;         // defending or granite djinn
+  uint8_t boost_power[ELEMENTS];  // qty is how many djinn
+  uint8_t cursed_item;
+  uint8_t poisoned;
+  uint8_t boost_attack_duration;
+  uint8_t boost_attack; // can be positive (e.g. 0x02) or negative (e.g. 0xfe)
+  uint8_t boost_defense_duration;
+  uint8_t boost_defense;
+  uint8_t boost_resistance_duration;
+  uint8_t boost_resistance;
+  uint8_t delusion_duration;
+
+  uint8_t _unknown7[1];
+
+  uint16_t stunned; // TODO this doesn't seem right
+
+  uint8_t psyseal_duration; // TODO check
+  uint8_t psyseal; 
+
+  uint8_t _unknown8[2];
+
+  uint8_t evil_spirit;
+  uint8_t premonition; // "downed in N turns"
+
+  uint8_t _unknown9[2];
+
+  uint8_t extra_moves;
+  uint8_t frozen; // "unable to move"
+
+  uint8_t boost_agility_duration;
+  uint8_t boost_agility;
+
+} ExportEnemy;
+
+void export_copy_enemy(Unit* unit, ExportEnemy* send);
 
 // information about each djinn
 typedef struct Export_Djinn_Item {
