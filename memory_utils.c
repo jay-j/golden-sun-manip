@@ -170,7 +170,7 @@ uint8_t* find_wram(pid_t pid){
     //}
   }
 
-  assert(solution != NULL);
+  assert(solution != NULL); // remember to sudo or this will show up
   printf("found %d solutions\n", search_complete);
 
   size_t offset = solution - buff_full; // heap plus this many bytes is where the character data is
