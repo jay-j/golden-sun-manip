@@ -2,13 +2,30 @@
 #ifndef GOLDEN_SUN_EXPORT_H
 #define GOLDEN_SUN_EXPORT_H
 
-#include<stdio.h>
-#include<stdint.h>
-#include<stddef.h> // for offsetof()
-#include<string.h> // for memcpy
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h> // for offsetof()
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h> // for memcpy
+#include <sys/uio.h> // for process memory manipulation
+#include <errno.h>
+
 #include "golden_sun.h"
 
 #pragma pack(push, 1)
+
+uint8_t party_order_to_character_id(pid_t pid, void* wram_ptr, uint8_t position);
+void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n);
+uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr);
+
+// the names to use for the memory search. assumes name limit of 5 characters
+#define NAME_P1 "Isaac"
+#define NAME_P2 "Garet"
+char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n);
+uint8_t* find_wram(pid_t pid);
+pid_t find_pid();
 
 typedef struct ExportAlly{
   uint8_t level;
@@ -73,7 +90,8 @@ typedef struct ExportAlly{
 
 } ExportAlly;
 
-void export_copy_ally(Unit* unit, ExportAlly* send);
+void export_copy_allies(pid_t pid, uint8_t* wram_ptr, Unit* unit, ExportAlly* send);
+void export_copy_allies_single(Unit* unit, ExportAlly* send);
 void print_data_ally(ExportAlly* ally);
 
 typedef struct ExportEnemy{
@@ -154,6 +172,8 @@ typedef struct Export_Djinn_List{
 
 // a djinn list for every character
 typedef Export_Djinn_List Export_Djinn[4];
+
+void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);
 
 
 // todo write unknowns array. with memory pointer offset and number of bytes. so I can just loop through all of them.

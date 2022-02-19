@@ -11,7 +11,6 @@
 
 #include "golden_sun.h"
 #include "golden_sun_utils.h"
-#include "memory_utils.h"
 #include "loop_timer.h"
 
 #define STATE_PASSTHRU 0
@@ -170,7 +169,7 @@ int main(int argc, char* argv[]){
     battle_menu_current = get_battle_menu(pid, wram_ptr);
 
     // make nice states to send
-    export_copy_ally(allies_raw, allies_send);
+    export_copy_allies(pid, wram_ptr, allies_raw, allies_send);
     export_copy_enemy(enemies_raw, enemies_send);
 
     if (state == STATE_PASSTHRU){
@@ -186,7 +185,6 @@ int main(int argc, char* argv[]){
 
     if (state == STATE_BATTLE_INIT){
       for (size_t i=0; i<4; i++){
-        export_copy_ally(allies_raw+i, allies_send+i);
         print_data_ally(allies_send+i);
       }
 

@@ -7,7 +7,6 @@
 
 #include "golden_sun.h"
 #include "golden_sun_utils.h"
-#include "memory_utils.h"
 
 // print what address to punch in PINCE to manipulate djinn data
 void print_djinn_aid(uint8_t* wram_ptr){

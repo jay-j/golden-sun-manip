@@ -28,6 +28,7 @@ typedef struct{
 } ElementalAffinity;
 
 #define ALLIES 4
+#define MEMORY_OFFSET_ALLIES_ORDER 0x438
 #define MEMORY_OFFSET_ALLIES 0x500
 #define MEMORY_OFFSET_ENEMY 0x30878
 typedef struct Unit {
