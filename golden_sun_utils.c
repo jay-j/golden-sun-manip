@@ -27,7 +27,7 @@ void export_copy_allies(pid_t pid, uint8_t* wram_ptr, Unit* unit, ExportAlly* se
 } 
 
 
-void export_copy_enemy(Unit* unit, ExportEnemy* send){
+void export_copy_enemies_single(Unit* unit, ExportEnemy* send){
   // level thru pp_base
   memcpy(send, &unit->level, offsetof(struct Unit, _unknown1) - offsetof(struct Unit, level) );
 
@@ -44,6 +44,12 @@ void export_copy_enemy(Unit* unit, ExportEnemy* send){
   memcpy(&send->class, &unit->class, offsetof(struct Unit, _unknown10) - offsetof(struct Unit, class));
 }
   
+void export_copy_enemies(Unit* unit, ExportEnemy* send){
+  for (size_t i=0; i<5; ++i){
+    export_copy_enemies_single(unit+i, send+i);
+  }
+}
+
 void print_data_ally(ExportAlly* ally){
   printf("Level: %u   Class: %u\n", ally->level, ally->class);
   printf("Health: %u / %u     PP: %u / %u\n", ally->health_current, ally->health_max, ally->pp_current, ally->pp_max);

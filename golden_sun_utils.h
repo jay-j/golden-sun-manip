@@ -155,7 +155,8 @@ typedef struct ExportEnemy{
 
 } ExportEnemy;
 
-void export_copy_enemy(Unit* unit, ExportEnemy* send);
+void export_copy_enemies_single(Unit* unit, ExportEnemy* send);
+void export_copy_enemies(Unit* unit, ExportEnemy* send);
 
 // information about each djinn
 typedef struct Export_Djinn_Item {
