@@ -1,5 +1,21 @@
 #include "golden_sun_utils.h"
 
+uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, size_t offset){
+  uint8_t result = 0;
+  struct iovec local[1];
+  local[0].iov_base = &result;
+  local[0].iov_len = 1;
+
+  struct iovec remote[1];
+  remote[0].iov_base = wram_ptr + offset;
+  remote[0].iov_len = 1;
+
+  ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
+  assert(n_read == 1);
+  return result;
+}  
+
+
 // copy from game-wram Unit structure to the more concise game state structure ally
 void export_copy_allies_single(Unit* unit, ExportAlly* send){
   // level thru pp_base
@@ -162,20 +178,22 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
   }
 }
 
+
 uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr){
-  uint8_t result = 0;
-  struct iovec local[1];
-  local[0].iov_base = &result;
-  local[0].iov_len = 1;
-
-  struct iovec remote[1];
-  remote[0].iov_base = wram_ptr + MEMORY_OFFSET_BATTLE_MENU;
-  remote[0].iov_len = 1;
-
-  ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
-  assert(n_read == 1);
+  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU);
   return result;
  }
+
+#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER 0x347E1
+// are we at an individual character battle menu? e.g. reset action state?
+// 00 if active
+// f0 if in pre-menu (or other menus - caution)
+// f1 if in watching the battle view mode?
+uint8_t get_battle_menu_character(pid_t pid, uint8_t* wram_ptr){
+  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER);
+  return result;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 

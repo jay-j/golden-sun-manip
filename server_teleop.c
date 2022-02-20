@@ -110,7 +110,7 @@ void passthru(Display* display, Teleop_Command* teleop_command){
 ////////////////////////////////////////////////////////////////////////////////////
 
 
-uint8_t* action_tracking(uint8_t* action_list, uint8_t* action_current, Teleop_Command* teleop){
+uint8_t* action_tracking(pid_t pid, uint8_t* wram_ptr, uint8_t* action_list, uint8_t* action_current, Teleop_Command* teleop){
   // TODO how to handle limits
   if (teleop->dpad_right == 1){
     *action_current += 1;
@@ -128,7 +128,12 @@ uint8_t* action_tracking(uint8_t* action_list, uint8_t* action_current, Teleop_C
   // need to detect what the selection state is; character ready vs some detail
   if (teleop->button_b == 1){
     if (action_current > action_list){
-      --action_current;
+      if (get_battle_menu_character(pid, wram_ptr) == 0){
+        action_current -= 3;
+      }
+      else{
+        --action_current;
+      }
     }
   }
 
@@ -249,7 +254,7 @@ int main(int argc, char* argv[]){
       // TODO how to handle downed characters?
       // TODO record current party order, re=arrange things from allies_raw
       // TODO convert the action commands here into "psyenergy 1C" commands. if bot tries to give such a command and it is invalid, just defend instead
-      action_current = action_tracking(action_list, action_current, &teleop_command); 
+      action_current = action_tracking(pid, wram_ptr, action_list, action_current, &teleop_command); 
 
       // upon leaving this state, save the input action dataset
       if ((battle_menu_current == 0) && (battle_menu_previous == 1)){
