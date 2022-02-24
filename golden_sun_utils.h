@@ -190,6 +190,7 @@ void golden_sun_print_unknowns(Unit* unit);
 uint32_t djinn_to_x86(uint32_t x);
 
 uint32_t health_total(Unit* units, size_t n);
+void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* actions);
 
 #pragma pack(pop)
 #endif // header guards

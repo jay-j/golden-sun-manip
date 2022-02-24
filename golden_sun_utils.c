@@ -425,3 +425,17 @@ void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_d
   }
 
 }
+
+
+void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* actions){
+  struct iovec local[1];
+  local[0].iov_base = actions;
+  local[0].iov_len = BATTLE_ACTION_QUEUE_MAX_LENGTH*sizeof(Battle_Action);
+
+  struct iovec remote[1];
+  remote[0].iov_base = wram_ptr + MEMORY_OFFSET_BATTLE_ACTION_QUEUE;
+  remote[0].iov_len = local[0].iov_len;
+
+  ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
+  assert(n_read == remote[0].iov_len);
+}

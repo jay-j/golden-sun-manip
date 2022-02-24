@@ -141,6 +141,7 @@ typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
 #define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
+#define BATTLE_ACTION_QUEUE_MAX_LENGTH (ALLIES+5)
 typedef struct Battle_Action {
   // true (not party order) character id for allies. 80..81.. for enemies. ff if downed
   uint8_t character_id;
@@ -160,7 +161,7 @@ typedef struct Battle_Action {
   uint8_t unknown3;
 
   // read from the psyenergy save list! 
-  // the djinn number?
+  // the djinn number.. power per element. e.g vine is 3 because it is 0b 1000
   // for summons there is a different counting system than in the "save file" spec
   uint8_t command;
 
@@ -173,7 +174,10 @@ typedef struct Battle_Action {
   // this is some kind of index; remains even if the original enemy is gone
   uint8_t target; 
 
+  uint8_t unknown4[5];
+
 } Battle_Action;  
+// is a 16-byte (0x10) size structure
 
 
 
