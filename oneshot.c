@@ -71,5 +71,13 @@ int main(int argc, char* argv[]){
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);
 
+  Battle_Action actions[BATTLE_ACTION_QUEUE_MAX_LENGTH];
+  get_battle_action_queue(pid, wram_ptr, actions);
+
+  for(size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
+    printf("Character: %u \tAction: %u %u \tTarget: %u \tDjinn Element: %u\n", 
+       actions[i].character_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].element);
+  }
+
   return 0;
 }

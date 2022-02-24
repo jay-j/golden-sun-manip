@@ -188,3 +188,37 @@ Want to setup the NAT approach. 10.0.1.1 and 10.1.10... unique network between t
 ## pygame keys
 https://www.pygame.org/docs/ref/key.html
 
+## looking for more reliable start points
+WRAM is at 0x6a3e370
+so character1 is at +1280 bytes; 0x6A3E870 this seems to be the case, oneshot data looks ok
+0x06 A3 E8 70 .... is not found anywhere :(
+
+try decrementing by one a few times 6f, 6e, 6d, 6c, 6b, 6a, 69.. nothing found
+
+
+https://github.com/NotFx/Bizhawk-GS-TBS-Utility-Script
+
+## 
+Looking for start points
+With mia first in the party, looking at her psyenergy command gives 0x79294c0
+there appears to be a 16-byte structure (increment +0x10).. that is populated in order of party members, but then after the final party member gets re-ordered according to who is going to act first
+
+the structure is all entities in the battle - both enemies AND players
+
+look two bytes before that. 0x79294be
+00 = attack
+01 = psyenergy
+02 = item
+03 = defend
+04 = 
+05 = djinn
+
+the character id part is the start of the queue structure?
+all these are set ff
+as you set each character they move from ff to the character_id (e.g. mia=03 regardless of party)
+
+in battle downed characters have their array set to ff
+
+have to hit 'a' once to make the first character's action be set to ff; so grab the battle status before this happens
+
+if a character is asleep, then the queue isn't zero'd; instead that character still gets an entry. if a character is downed, then they don't get any entry in the action queue
