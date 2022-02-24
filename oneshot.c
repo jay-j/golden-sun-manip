@@ -7,7 +7,6 @@
 
 #include "golden_sun.h"
 #include "golden_sun_utils.h"
-#include "memory_utils.h"
 
 // print what address to punch in PINCE to manipulate djinn data
 void print_djinn_aid(uint8_t* wram_ptr){
@@ -64,6 +63,9 @@ int main(int argc, char* argv[]){
 
   uint8_t ready = get_battle_menu(pid, wram_ptr);
   printf("Battle menu? %u\n", ready);
+
+  uint8_t cmd = get_battle_menu_character(pid, wram_ptr);
+  printf("Character menu state? %u\n", cmd);
 
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);

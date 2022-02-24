@@ -11,7 +11,6 @@
 
 #include "golden_sun.h"
 #include "golden_sun_utils.h"
-#include "memory_utils.h"
 #include "loop_timer.h"
 
 #define STATE_PASSTHRU 0
@@ -19,6 +18,8 @@
 #define STATE_BATTLE_CMD 2
 #define STATE_BATTLE_WATCH 3
 #define STATE_BATTLE_END 4
+
+#define ACTIONS_MAX 128
 
 ///////////////////////////////////////////////////////////////////////////////////
 void key_tap(Display* display, int keycode_sym){
@@ -107,6 +108,49 @@ void passthru(Display* display, Teleop_Command* teleop_command){
 
 
 ////////////////////////////////////////////////////////////////////////////////////
+
+
+uint8_t* action_tracking(pid_t pid, uint8_t* wram_ptr, uint8_t* action_list, uint8_t* action_current, Teleop_Command* teleop){
+  // TODO how to handle limits
+  if (teleop->dpad_right == 1){
+    *action_current += 1;
+  }
+  if (teleop->dpad_left == 1){
+    *action_current -= 1; 
+  }
+
+  if (teleop->button_a == 1){
+    ++action_current;
+    assert(action_current - action_list < ACTIONS_MAX);
+  }
+
+  // TODO need to move extra; backtracking goes from one character to the previous (push it 3 back, not 1)
+  // need to detect what the selection state is; character ready vs some detail
+  if (teleop->button_b == 1){
+    if (action_current > action_list){
+      if (get_battle_menu_character(pid, wram_ptr) == 0){
+        action_current -= 3;
+      }
+      else{
+        --action_current;
+      }
+    }
+  }
+
+  // print the action list up to this point
+  uint8_t* p = action_list;
+  printf("Current Action List: ");
+  while (p <= action_current){
+    printf("%u  ", *p);
+    ++p;
+  }
+  printf("\n");
+
+  return action_current;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]){
 
   // find the game process, find where in heap the start of wram is 
@@ -142,6 +186,10 @@ int main(int argc, char* argv[]){
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
 
+  // action tracking
+  uint8_t action_list[ACTIONS_MAX];
+  memset(action_list, 0, ACTIONS_MAX);
+  uint8_t* action_current = action_list;
   
   // special button to initialize a battle mode. initialize when the menu is up (so first action is fight)
   // record game state
@@ -170,8 +218,8 @@ int main(int argc, char* argv[]){
     battle_menu_current = get_battle_menu(pid, wram_ptr);
 
     // make nice states to send
-    export_copy_ally(allies_raw, allies_send);
-    export_copy_enemy(enemies_raw, enemies_send);
+    export_copy_allies(pid, wram_ptr, allies_raw, allies_send);
+    export_copy_enemies(enemies_raw, enemies_send);
 
     if (state == STATE_PASSTHRU){
       // printf("STATE:                PASSTHRU\n");
@@ -186,18 +234,15 @@ int main(int argc, char* argv[]){
 
     if (state == STATE_BATTLE_INIT){
       for (size_t i=0; i<4; i++){
-        export_copy_ally(allies_raw+i, allies_send+i);
         print_data_ally(allies_send+i);
       }
 
-      for (size_t i=0; i<5; i++){
-        export_copy_enemy(enemies_raw+i, enemies_send+i);
-      }
-      
+      // reset the action tracking
+      memset(action_list, 0, ACTIONS_MAX);
 
       // get the initial state; the enemy input data
       // advance to STATE_BATTLE_CMD
-      if (teleop_command.button_right == 1){
+      if (teleop_command.button_a == 1){
         state = STATE_BATTLE_CMD;
       }
     }
@@ -209,6 +254,7 @@ int main(int argc, char* argv[]){
       // TODO how to handle downed characters?
       // TODO record current party order, re=arrange things from allies_raw
       // TODO convert the action commands here into "psyenergy 1C" commands. if bot tries to give such a command and it is invalid, just defend instead
+      action_current = action_tracking(pid, wram_ptr, action_list, action_current, &teleop_command); 
 
       // upon leaving this state, save the input action dataset
       if ((battle_menu_current == 0) && (battle_menu_previous == 1)){
