@@ -6,9 +6,11 @@ The unit struct is 332 bytes in both GS1 and TLA.
 ## Locating in Memory
 Many (all?) significant values are stored at static memory addresses within `WRAM`, the GBA's original memory. So the challenge is to locate where the start of `WRAM` is within the emulator's heap. I use character names and the size of the unit struct: find where in memory the string "Isaac" starts 332 bytes before the string "Garet". The start of "Isaac" is 1280 bytes after the start of `WRAM 0x2000000`, which seems to be the commonly used memory coordinate system. From here, several areas of memory are accessed in order to extract a full battle state:
 - Djinn recovery/standby queue. Queue length at `+0x354`, queue of 4-byte elements starting at `+0x254`.
+- Order of allied units. A four byte array starting at `+0x438` (array index is position, value is character; Isaac=0, Garet=1, Ivan=2, Mia=3).
 - Allied units. An array of four 332-byte `Unit` structures starting at `+0x500`
 - Enemy units. An array of five (?) 332-byte `Unit` structures starting at `+0x30878`.
 - Battle UI requesting human input. A single byte at `+0x31054`.
+- Battle menu character init single byte at `+0x2094`. 65 if ready, 0 if not (selecting djinn or psyenergy or something). 65 at attack/flee screen as well. Moves to 4 in the middle of battle in some places.. so this probably isn't it? 
 
 # TODO
 - Constant background monitoring
