@@ -139,6 +139,43 @@ typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough
 
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
+#define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
+typedef struct Battle_Action {
+  // true (not party order) character id for allies. 80..81.. for enemies. ff if downed
+  uint8_t character_id;
+
+  uint8_t unknown1[3];
+
+  uint8_t agility; // this is sorted after command entry is complete
+
+  uint8_t unknown2;
+
+  // 00 = attack, 01 = psyenergy, 02 = item, 03 = defend, 04 = monster only?
+  // 05 = djinn,  06 = summon
+  // 08 = asleep
+  uint8_t action_type;
+
+  // modifier?? always seems to be zero
+  uint8_t unknown3;
+
+  // read from the psyenergy save list! 
+  // the djinn number?
+  // for summons there is a different counting system than in the "save file" spec
+  uint8_t command;
+
+  // modifier??
+  // djinn element (per normal elemental rules). not psyenergy related
+  uint8_t element;
+
+  // 0..3 for alies. in party order (not character data order)
+  // 80, 81, 82... for enemies (ordering left to right)
+  // this is some kind of index; remains even if the original enemy is gone
+  uint8_t target; 
+
+} Battle_Action;  
+
+
+
 #pragma pack(pop)
 
 #endif // header guard
