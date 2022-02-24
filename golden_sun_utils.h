@@ -19,8 +19,9 @@
 uint8_t party_order_to_character_id(pid_t pid, void* wram_ptr, uint8_t position);
 void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n);
 uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr);
-uint8_t get_battle_menu_character(pid_t pid, uint8_t* wram_ptr);
-uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, size_t offset);
+uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr);
+uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr);
+uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, int64_t offset);
 
 // the names to use for the memory search. assumes name limit of 5 characters
 #define NAME_P1 "Isaac"

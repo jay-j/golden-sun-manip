@@ -19,7 +19,7 @@
 #define STATE_BATTLE_WATCH 3
 #define STATE_BATTLE_END 4
 
-#define ACTIONS_MAX 128
+#define ACTIONS_MAX 5
 
 ///////////////////////////////////////////////////////////////////////////////////
 void key_tap(Display* display, int keycode_sym){
@@ -108,7 +108,10 @@ void passthru(Display* display, Teleop_Command* teleop_command){
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-
+// need action tracking per character
+// within character, generic accumulating
+// detect between character skips automatically
+// detec which character is active in commanding? 
 
 uint8_t* action_tracking(pid_t pid, uint8_t* wram_ptr, uint8_t* action_list, uint8_t* action_current, Teleop_Command* teleop){
   // TODO how to handle limits
@@ -126,14 +129,15 @@ uint8_t* action_tracking(pid_t pid, uint8_t* wram_ptr, uint8_t* action_list, uin
 
   // TODO need to move extra; backtracking goes from one character to the previous (push it 3 back, not 1)
   // need to detect what the selection state is; character ready vs some detail
+  // get character just gives the character order, not their real id in battle order, nor their underlying character id :(
   if (teleop->button_b == 1){
     if (action_current > action_list){
-      if (get_battle_menu_character(pid, wram_ptr) == 0){
-        action_current -= 3;
-      }
-      else{
+//      if (get_battle_menu_character(pid, wram_ptr) == 0){
+//        action_current -= 3;
+//      }
+//      else{
         --action_current;
-      }
+ //     }
     }
   }
 
@@ -178,17 +182,17 @@ int main(int argc, char* argv[]){
   Teleop_Command teleop_command;
 
   // make the golden sun data structures
-  Unit allies_raw[4];
-  Unit enemies_raw[5];
-  ExportAlly allies_send[4];
-  ExportEnemy enemies_send[5];
+  Unit allies_raw[ALLIES];
+  Unit enemies_raw[ENEMIES_MAX];
+  ExportAlly allies_send[ALLIES];
+  ExportEnemy enemies_send[ENEMIES_MAX];
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
 
   // action tracking
-  uint8_t action_list[ACTIONS_MAX];
-  memset(action_list, 0, ACTIONS_MAX);
+  uint8_t action_list[ACTIONS_MAX*ALLIES];
+  memset(action_list, 0, ACTIONS_MAX*ALLIES);
   uint8_t* action_current = action_list;
   
   // special button to initialize a battle mode. initialize when the menu is up (so first action is fight)
@@ -212,8 +216,8 @@ int main(int argc, char* argv[]){
     joystick(server_socket, &teleop_command);
 
     // get data from golden sun
-    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, 4);
-    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, 5);
+    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, ALLIES);
+    get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, ENEMIES_MAX);
     battle_menu_previous = battle_menu_current;
     battle_menu_current = get_battle_menu(pid, wram_ptr);
 
@@ -233,7 +237,7 @@ int main(int argc, char* argv[]){
     } 
 
     if (state == STATE_BATTLE_INIT){
-      for (size_t i=0; i<4; i++){
+      for (size_t i=0; i<ALLIES; i++){
         print_data_ally(allies_send+i);
       }
 
@@ -268,7 +272,7 @@ int main(int argc, char* argv[]){
       // just mash B until the battle menu flag is once again detected
       key_tap(display, XK_j);
  
-      for(int i=0; i<5; i++){
+      for(int i=0; i<ENEMIES_MAX; i++){
         printf("%u  ", enemies_raw[i].health_current);
       }
       printf("\n");
@@ -285,7 +289,7 @@ int main(int argc, char* argv[]){
       }
 
       // if all enemies are dead... go back to passthrough mode
-      if (health_total(enemies_raw, 5) == 0){
+      if (health_total(enemies_raw, ENEMIES_MAX) == 0){
         state = STATE_BATTLE_END;
       }
     }

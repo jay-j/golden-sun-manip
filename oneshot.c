@@ -64,8 +64,9 @@ int main(int argc, char* argv[]){
   uint8_t ready = get_battle_menu(pid, wram_ptr);
   printf("Battle menu? %u\n", ready);
 
-  uint8_t cmd = get_battle_menu_character(pid, wram_ptr);
-  printf("Character menu state? %u\n", cmd);
+  uint8_t cmd = get_battle_menu_character_init(pid, wram_ptr);
+  uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
+  printf("Character %u menu state? %u\n", char_id, cmd);
 
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);

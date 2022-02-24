@@ -1,6 +1,6 @@
 #include "golden_sun_utils.h"
 
-uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, size_t offset){
+uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, int64_t offset){
   uint8_t result = 0;
   struct iovec local[1];
   local[0].iov_base = &result;
@@ -184,16 +184,22 @@ uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr){
   return result;
  }
 
-#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER 0x347E1
+#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_INIT 0x347E1
 // are we at an individual character battle menu? e.g. reset action state?
 // 00 if active
 // f0 if in pre-menu (or other menus - caution)
 // f1 if in watching the battle view mode?
-uint8_t get_battle_menu_character(pid_t pid, uint8_t* wram_ptr){
-  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER);
+uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr){
+  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_INIT);
   return result;
 }
 
+#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID (-0x3AAB78)
+uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr){
+  printf("wram = %p .... character at %p\n", wram_ptr, wram_ptr+MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
+  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
+  return result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -216,7 +222,7 @@ pid_t find_pid(){
 
 
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n){
-  printf("looking for %s...\n", needle);
+  //printf("looking for %s...\n", needle);
 
   char* haystack = haystack_start; // current
   char* haystack_end = haystack_start + haystack_n;
@@ -307,10 +313,10 @@ uint8_t* find_wram(pid_t pid){
       break;
     }
     assert(found_p1 != NULL);
-    printf("Found %s at %p\n", NAME_P1, found_p1);
+    //printf("Found %s at %p\n", NAME_P1, found_p1);
 
     found_p2 = strstr_n(buff, buff_end - buff, NAME_P2, 5);
-    printf("Found %s at %p\n", NAME_P2, found_p2);
+    //printf("Found %s at %p\n", NAME_P2, found_p2);
     assert(found_p2 != NULL);
 
     if (found_p2 - found_p1 == sizeof(Unit)){

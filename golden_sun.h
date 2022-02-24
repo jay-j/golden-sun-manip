@@ -31,6 +31,7 @@ typedef struct{
 #define MEMORY_OFFSET_ALLIES_ORDER 0x438
 #define MEMORY_OFFSET_ALLIES 0x500
 #define MEMORY_OFFSET_ENEMY 0x30878
+#define ENEMIES_MAX 5
 typedef struct Unit {
   char name[15];
   uint8_t level;
