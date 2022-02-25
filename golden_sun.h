@@ -144,12 +144,15 @@ typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough
 #define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
 #define BATTLE_ACTION_QUEUE_MAX_LENGTH (ALLIES+5)
 typedef struct Battle_Action {
-  // true (not party order) character id for allies. 80..81.. for enemies. ff if downed
-  uint8_t character_id;
+  // ALLIES: true (not party order) character id
+  // ENEMIES: 0x80.. 0x81.. ordered as they apper in battle left to right
+  // 0xff if downed or empty slot
+  uint8_t actor_id;
 
   uint8_t unknown1[3];
 
-  uint8_t agility; // this is sorted after command entry is complete
+  // after the command phase of battle, the queue is sorted on this value
+  uint8_t agility; 
 
   uint8_t unknown2;
 
@@ -166,12 +169,11 @@ typedef struct Battle_Action {
   // for summons there is a different counting system than in the "save file" spec
   uint8_t command;
 
-  // modifier??
   // djinn element (per normal elemental rules). not psyenergy related
   uint8_t element;
 
-  // 0..3 for alies. in party order (not character data order)
-  // 80, 81, 82... for enemies (ordering left to right)
+  // 0x00..0x03 for alies. in party order (not character data order)
+  // 0x80, 0x81, 0x82... for enemies (ordering left to right)
   // this is some kind of index; remains even if the original enemy is gone
   uint8_t target; 
 
@@ -179,7 +181,8 @@ typedef struct Battle_Action {
 
 } Battle_Action;  
 // is a 16-byte (0x10) size structure
-
+// TODO make some way of determining unknowns? macros????
+// 
 
 
 #pragma pack(pop)

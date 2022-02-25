@@ -76,7 +76,7 @@ int main(int argc, char* argv[]){
 
   for(size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
     printf("Character: %u \tAction: %u %u \tTarget: %u \tDjinn Element: %u\n", 
-       actions[i].character_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].element);
+       actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].element);
   }
 
   return 0;
