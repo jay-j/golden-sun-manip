@@ -68,6 +68,7 @@ void joystick(void* socket, Teleop_Command* teleop_command){
       ++ptr;
     }
 
+    /*
     if (change > 0){
       printf("received teleop command: ");
       uint8_t* ptr = (uint8_t*) teleop_command;
@@ -77,6 +78,7 @@ void joystick(void* socket, Teleop_Command* teleop_command){
       }
       printf("\n");
     }
+    */
     
   }
   else{
@@ -108,51 +110,33 @@ void passthru(Display* display, Teleop_Command* teleop_command){
 
 
 ////////////////////////////////////////////////////////////////////////////////////
-// need action tracking per character
-// within character, generic accumulating
-// detect between character skips automatically
-// detec which character is active in commanding? 
 
-uint8_t* action_tracking(pid_t pid, uint8_t* wram_ptr, uint8_t* action_list, uint8_t* action_current, Teleop_Command* teleop){
-  // TODO how to handle limits
-  if (teleop->dpad_right == 1){
-    *action_current += 1;
-  }
-  if (teleop->dpad_left == 1){
-    *action_current -= 1; 
-  }
-
-  if (teleop->button_a == 1){
-    ++action_current;
-    assert(action_current - action_list < ACTIONS_MAX);
-  }
-
-  // TODO need to move extra; backtracking goes from one character to the previous (push it 3 back, not 1)
-  // need to detect what the selection state is; character ready vs some detail
-  // get character just gives the character order, not their real id in battle order, nor their underlying character id :(
-  if (teleop->button_b == 1){
-    if (action_current > action_list){
-//      if (get_battle_menu_character(pid, wram_ptr) == 0){
-//        action_current -= 3;
-//      }
-//      else{
-        --action_current;
- //     }
-    }
-  }
-
-  // print the action list up to this point
-  uint8_t* p = action_list;
-  printf("Current Action List: ");
-  while (p <= action_current){
-    printf("%u  ", *p);
-    ++p;
-  }
-  printf("\n");
-
-  return action_current;
+FILE* logfile_init(){
+  FILE* fd;
+  printf("[LOG] FILE INIT\n");
+  fd = fopen("test.txt", "w");
+  fprintf(fd, "HEADER HERE\n");
+  return fd;
 }
 
+
+void logfile_write_action(FILE* fd){
+  printf("[LOG] WRITE ACTION\n");
+  fprintf(fd, "action here\n");
+}
+
+
+void logfile_write_state(FILE* fd){
+  printf("[LOG] WRITE STATE\n");
+  fprintf(fd, "state here\n");
+}
+
+
+void logfile_close(FILE* fd){
+  printf("[LOG] CLOSE\n");
+  fprintf(fd, "CLOSER HERE\n");
+  fclose(fd);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv[]){
@@ -186,25 +170,22 @@ int main(int argc, char* argv[]){
   Unit enemies_raw[ENEMIES_MAX];
   ExportAlly allies_send[ALLIES];
   ExportEnemy enemies_send[ENEMIES_MAX];
+  Battle_Action actions_raw[BATTLE_ACTION_QUEUE_MAX_LENGTH];
+
+  // log file pointer
+  FILE* logfile;
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
+  printf("go!\n");
 
-  // action tracking
-  uint8_t action_list[ACTIONS_MAX*ALLIES];
-  memset(action_list, 0, ACTIONS_MAX*ALLIES);
-  uint8_t* action_current = action_list;
-  
   // special button to initialize a battle mode. initialize when the menu is up (so first action is fight)
   // record game state
   // also directly send battle commands.. but accumulate values for them. 
   //  e.g. simulate state to know advanced to what action, what subaction, what target.
-  //  don't allow the user to perform the side hops from below the top row in dual menu options? 
-  //  don't allow flipping around the end - since length of a state is not tracked properly
-  //  what about buff spells? they target the user first. just record how many shifts for the targeting part.
   // record net battle commands
   // automatically exit battle mode once all enemies have been detected defeated
-  //
+  
   int state = STATE_PASSTHRU;
   int battle_menu_previous = 0;
   int battle_menu_current = 0;
@@ -218,70 +199,65 @@ int main(int argc, char* argv[]){
     // get data from golden sun
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, ALLIES);
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, ENEMIES_MAX);
+    get_battle_action_queue(pid, wram_ptr, actions_raw);
     battle_menu_previous = battle_menu_current;
-    battle_menu_current = get_battle_menu(pid, wram_ptr);
+    battle_menu_current = get_battle_menu(actions_raw); // TODO modify to take the action state
+    // TODO djinn data
+    // TODO battle action list
 
     // make nice states to send
     export_copy_allies(pid, wram_ptr, allies_raw, allies_send);
     export_copy_enemies(enemies_raw, enemies_send);
 
+    ////////// for normal gameplay //////////
     if (state == STATE_PASSTHRU){
-      // printf("STATE:                PASSTHRU\n");
       // send keys on 1:1
       passthru(display, &teleop_command);
 
       // listen to initialize battle mode
       if (teleop_command.battle_init == 1){
+        logfile = logfile_init();
         state = STATE_BATTLE_INIT;
       }
     } 
 
+    ////////// just before commands start - record the STATE //////////
     if (state == STATE_BATTLE_INIT){
+      /*
       for (size_t i=0; i<ALLIES; i++){
         print_data_ally(allies_send+i);
       }
-
-      // reset the action tracking
-      memset(action_list, 0, ACTIONS_MAX);
-
-      // get the initial state; the enemy input data
-      // advance to STATE_BATTLE_CMD
-      if (teleop_command.button_a == 1){
-        state = STATE_BATTLE_CMD;
-      }
-    }
-
-    if (state == STATE_BATTLE_CMD){
-      // printf("STATE:        CMD\n");
-      passthru(display, &teleop_command);
-      // tricky! record the action state
-      // TODO how to handle downed characters?
-      // TODO record current party order, re=arrange things from allies_raw
-      // TODO convert the action commands here into "psyenergy 1C" commands. if bot tries to give such a command and it is invalid, just defend instead
-      action_current = action_tracking(pid, wram_ptr, action_list, action_current, &teleop_command); 
-
-      // upon leaving this state, save the input action dataset
-      if ((battle_menu_current == 0) && (battle_menu_previous == 1)){
-        printf("  end listening for player input in battle\n");
-        state = STATE_BATTLE_WATCH;
-      }
-    }
-
-    if (state == STATE_BATTLE_WATCH){
-      printf("STATE: WATCH\n");
-      // just mash B until the battle menu flag is once again detected
-      key_tap(display, XK_j);
+      */
  
       for(int i=0; i<ENEMIES_MAX; i++){
         printf("%u  ", enemies_raw[i].health_current);
       }
       printf("\n");
 
-      // TODO make some new states for these conditions!
+      // TODO write state
+      logfile_write_state(logfile);
 
-      // put some lag in leaving this state? to capture the close ups? make new states for the close up situation? 
-      // has changed to command but only for a short time and enemy total health is > 0
+      // get the initial state; the enemy input data
+      state = STATE_BATTLE_CMD;
+    }
 
+    ////////// player is entering commands, wait for the exit, then record the ACTION //////////
+    if (state == STATE_BATTLE_CMD){
+      passthru(display, &teleop_command);
+
+      // upon leaving this state, save the input action dataset
+      if (get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU) == 0){
+        printf("  end listening for player input in battle\n");
+        logfile_write_action(logfile);
+        state = STATE_BATTLE_WATCH;
+      }
+    }
+
+    ////////// mash the b button while the battle goes by //////////
+    if (state == STATE_BATTLE_WATCH){
+      // just mash B until the battle menu flag is once again detected
+      key_tap(display, XK_j);
+ 
       // upon leaving this state, save the battle ally+enemy dataset
       if ((battle_menu_current == 1) && (battle_menu_previous == 0)){
         printf("  end passive watching of the battle.\n");
@@ -293,13 +269,15 @@ int main(int argc, char* argv[]){
         state = STATE_BATTLE_END;
       }
     }
-    // TODO there is some condition of enemy attacks where this logic doesn't work...?! :(
 
+    ////////// battle is over, record state one more time, close up the log file //////////
     if (state == STATE_BATTLE_END){
       printf("STATE: BATTLE ENDED!\n");
-      for(int i=0; i<3; ++i){
-        key_tap(display, XK_k); // TODO how many of these to finish the battle?
-      }
+      // TODO log state
+      // TODO close log file
+      logfile_write_state(logfile);
+      logfile_close(logfile);
+
       state = STATE_PASSTHRU;
     }
 

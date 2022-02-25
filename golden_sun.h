@@ -155,7 +155,7 @@ typedef struct __attribute__((__packed__)) Battle_Action {
   // after the command phase of battle, the queue is sorted on this value
   uint8_t agility; 
 
-  // defaults to 0x80 for the whole queue. 
+  // defaults to 0x80 for the whole queue... except for characters that are asleep (other statuses..unknown)
   // once a character command is queued, changes to 0x00 for that character (but never back to 0x80). 0x27 for granite
   // enemies get turned to 0x00 once the command phase of battle ends.
   uint8_t unknown4;

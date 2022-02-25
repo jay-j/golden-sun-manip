@@ -84,9 +84,6 @@ int main(int argc, char* argv[]){
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
 
-  uint8_t ready = get_battle_menu(pid, wram_ptr);
-  printf("Battle menu? %u\n", ready);
-
   uint8_t cmd = get_battle_menu_character_init(pid, wram_ptr);
   uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
   printf("Character %u menu state? %u\n", char_id, cmd);
@@ -102,6 +99,9 @@ int main(int argc, char* argv[]){
        actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].falloff, actions[i].element);
     print_battle_action_unknowns(actions+i);
   }
+
+  uint8_t ready = get_battle_menu(actions);
+  printf("Battle menu? %u\n", ready);
 
   return 0;
 }
