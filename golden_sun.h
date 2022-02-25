@@ -1,7 +1,7 @@
 // these are how the game stores things in ram; in general don't modify
 #ifndef GOLDEN_SUN_H
 #define GOLDEN_SUN_H
-
+#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
 #include <stdint.h>
 
 #define ELEMENTS 4
@@ -10,19 +10,18 @@
 #define ELEMENT_MARS 2
 #define ELEMENT_JUPITER 3
 
-#pragma pack(push, 1)
-typedef struct {
+typedef struct __attribute__((__packed__)) {
   uint8_t spell;
   uint8_t source;
   uint16_t zeros;
 } Psyenergy;
 
-typedef struct{
+typedef struct __attribute__((__packed__)) {
   uint8_t item;
   uint8_t status;
 } Item;
 
-typedef struct{
+typedef struct __attribute__((__packed__)) {
   uint16_t power;
   uint16_t resistance;
 } ElementalAffinity;
@@ -32,7 +31,7 @@ typedef struct{
 #define MEMORY_OFFSET_ALLIES 0x500
 #define MEMORY_OFFSET_ENEMY 0x30878
 #define ENEMIES_MAX 5
-typedef struct Unit {
+typedef struct __attribute__((__packed__)) Unit {
   char name[15];
   uint8_t level;
   uint16_t health_base; 
@@ -116,7 +115,7 @@ typedef struct Unit {
 } Unit;
 
 
-typedef struct Djinn_Queue_Item {
+typedef struct __attribute__((__packed__)) Djinn_Queue_Item {
   // the element of the djinn
   // 00=venus, 01=mercury, 02=mars, 03=jupiter
   uint8_t element;
@@ -142,27 +141,31 @@ typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
 #define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
-#define BATTLE_ACTION_QUEUE_MAX_LENGTH (ALLIES+5)
-typedef struct Battle_Action {
+#define BATTLE_ACTION_QUEUE_MAX_LENGTH (ALLIES+ENEMIES_MAX)
+typedef struct __attribute__((__packed__)) Battle_Action {
   // ALLIES: true (not party order) character id
   // ENEMIES: 0x80.. 0x81.. ordered as they apper in battle left to right
   // 0xff if downed or empty slot
   uint8_t actor_id;
 
-  uint8_t unknown1[3];
+  uint8_t unknown1;
+  uint8_t unknown2;
+  uint8_t unknown3;
 
   // after the command phase of battle, the queue is sorted on this value
   uint8_t agility; 
 
-  uint8_t unknown2;
+  // defaults to 0x80 for the whole queue. 
+  // once a character command is queued, changes to 0x00 for that character (but never back to 0x80). 0x27 for granite
+  // enemies get turned to 0x00 once the command phase of battle ends.
+  uint8_t unknown4;
 
   // 00 = attack, 01 = psyenergy, 02 = item, 03 = defend, 04 = monster only?
   // 05 = djinn,  06 = summon
   // 08 = asleep
   uint8_t action_type;
 
-  // modifier?? always seems to be zero
-  uint8_t unknown3;
+  uint8_t unknown5;
 
   // read from the psyenergy save list! 
   // the djinn number.. power per element. e.g vine is 3 because it is 0b 1000
@@ -177,14 +180,21 @@ typedef struct Battle_Action {
   // this is some kind of index; remains even if the original enemy is gone
   uint8_t target; 
 
-  uint8_t unknown4[5];
+  // queue refreshed to 0x00 each turn
+  // once a character has queued a move for the first time, turns to 0x01
+  // enemies remain 0x00 until they have taken their turn, then 0x01
+  uint8_t unknown6;
 
-} Battle_Action;  
-// is a 16-byte (0x10) size structure
-// TODO make some way of determining unknowns? macros????
-// 
+  // 0xff for no falloff (all targets equally)
+  // 0x01 for single target, 0x02 for 3-unit target, 0x03 for 5-person target
+  // 0x04 for 7-person target, 0x06 for summon falloff
+  uint8_t falloff;
 
+  uint8_t unknown7;
+  uint8_t unknown8;
+  uint8_t unknown9;
 
-#pragma pack(pop)
+} Battle_Action; // 16 bytes total (stride 0x10) 
+
 
 #endif // header guard

@@ -14,8 +14,6 @@
 
 #include "golden_sun.h"
 
-#pragma pack(push, 1)
-
 uint8_t party_order_to_character_id(pid_t pid, void* wram_ptr, uint8_t position);
 void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n);
 uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr);
@@ -30,7 +28,7 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
 uint8_t* find_wram(pid_t pid);
 pid_t find_pid();
 
-typedef struct ExportAlly{
+typedef struct __attribute__((__packed__)) ExportAlly{
   uint8_t level;
   uint16_t health_base; 
   uint16_t pp_base;
@@ -97,7 +95,7 @@ void export_copy_allies(pid_t pid, uint8_t* wram_ptr, Unit* unit, ExportAlly* se
 void export_copy_allies_single(Unit* unit, ExportAlly* send);
 void print_data_ally(ExportAlly* ally);
 
-typedef struct ExportEnemy{
+typedef struct __attribute__((__packed__)) ExportEnemy{
   uint8_t level;
   uint16_t health_base; 
   uint16_t pp_base;
@@ -162,14 +160,14 @@ void export_copy_enemies_single(Unit* unit, ExportEnemy* send);
 void export_copy_enemies(Unit* unit, ExportEnemy* send);
 
 // information about each djinn
-typedef struct Export_Djinn_Item {
+typedef struct __attribute__((__packed__)) Export_Djinn_Item {
   uint8_t element;
   uint8_t status; // 0=set, small positive=recovery, 255=standby
   uint32_t id; // binary encoded, unique per element
 } Export_Djinn_Item;
 
 // djinn element order is venus, mercury, mars, jupiter
-typedef struct Export_Djinn_List{
+typedef struct __attribute__((__packed__)) Export_Djinn_List{
   uint16_t quantity;
   Export_Djinn_Item djinn[9];
 } Export_Djinn_List;
@@ -193,5 +191,4 @@ uint32_t djinn_to_x86(uint32_t x);
 uint32_t health_total(Unit* units, size_t n);
 void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* actions);
 
-#pragma pack(pop)
 #endif // header guards

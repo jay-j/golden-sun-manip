@@ -32,6 +32,29 @@ void print_djinn_aid(uint8_t* wram_ptr){
   }
 }
 
+
+void print_battle_action_unknowns(Battle_Action* action){
+  uint8_t* a = (uint8_t*) action;
+  size_t u[] = {offsetof(struct Battle_Action, unknown1), offsetof(struct Battle_Action, unknown2),
+                offsetof(struct Battle_Action, unknown3), offsetof(struct Battle_Action, unknown4),
+                offsetof(struct Battle_Action, unknown5), offsetof(struct Battle_Action, unknown6),
+                offsetof(struct Battle_Action, unknown7), offsetof(struct Battle_Action, unknown8),
+                offsetof(struct Battle_Action, unknown9)
+  };
+
+  for (size_t i=0; i<9; ++i){
+    uint8_t value = *(a + u[i]);
+    if (value > 0){
+      printf("%02x  ", *(a + u[i]));
+    }
+    else{
+      printf("__  ");
+    }
+  }
+  printf("\n");
+}
+
+
 int main(int argc, char* argv[]){
   if (argc != 2){
     printf("Usage: sudo ./scan\n");
@@ -49,7 +72,7 @@ int main(int argc, char* argv[]){
   Unit allies[4]; 
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
   for(int i=0; i<4; ++i){
-    printf("character: %s    health: %u   status: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
+    printf("character: %s \thealth: %u \tstatus: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
   }
 
   Unit enemies[5];
@@ -75,8 +98,9 @@ int main(int argc, char* argv[]){
   get_battle_action_queue(pid, wram_ptr, actions);
 
   for(size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
-    printf("Character: %u \tAction: %u %u \tTarget: %u \tDjinn Element: %u\n", 
-       actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].element);
+    printf("Character: %u \tAction: 0x%02x %02x \tTarget: 0x%02x (falloff %02x)\tDjinn Element: %u  \t ", 
+       actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].falloff, actions[i].element);
+    print_battle_action_unknowns(actions+i);
   }
 
   return 0;
