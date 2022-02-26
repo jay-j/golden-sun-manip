@@ -12,7 +12,7 @@
 
 typedef struct __attribute__((__packed__)) {
   uint8_t spell;
-  uint8_t source;
+  uint8_t source; // 0x80 = class, 0x40 = item, 0x00 = universal
   uint16_t zeros;
 } Psyenergy;
 

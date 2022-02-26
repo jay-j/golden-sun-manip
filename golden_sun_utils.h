@@ -51,7 +51,8 @@ typedef struct __attribute__((__packed__)) ExportAlly{
 
   ElementalAffinity elemental_max[ELEMENTS];
 
-  Psyenergy psy[32];
+  Psyenergy psy[32]; // TODO change to PsyenergyCompact format
+  // uint8_t psy[32]; ?? change to just the spell, ditch the source value also?
 
   uint8_t class;
   
@@ -97,7 +98,7 @@ void print_data_ally(ExportAlly* ally);
 
 typedef struct __attribute__((__packed__)) ExportEnemy{
   uint8_t level;
-  uint16_t health_base; 
+  uint16_t health_base;
   uint16_t pp_base;
   uint16_t attack_base;
   uint16_t defense_base;
@@ -106,7 +107,7 @@ typedef struct __attribute__((__packed__)) ExportEnemy{
 
   ElementalAffinity elemental_base[ELEMENTS];
   
-  uint16_t health_max;
+  uint16_t health_max; // TODO check if these ever change in battle
   uint16_t pp_max;
   uint16_t health_current;
   uint16_t pp_current;

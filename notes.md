@@ -237,7 +237,7 @@ need to quanity the option space - how many choices are there? discrete or conti
 
 ## State space
 - Character stats, status, active psyenergies, not items. (112 numbers per character: 448 total)
-- Djinn statuses (3 per djinn.. 7*4 max djinn in GS1.. 84 numbers)
+- Djinn statuses (3 per djinn.. 7x4 max djinn in GS1.. 84 numbers)
 - enemy status & status (48 per enemy: 240 total)
 
 Atari playing systems use an `observation space` which is Box(210, 160, 3) ; 210 pixels by 160 pixels by 3 color channels. Each of the ~100k items can have a value (presumably 0-255; simple graphics). And then potentially stack a few layers if velocity tracking is important. 
@@ -264,7 +264,8 @@ Action space is a big `Discrete` space. Just concatenate everything. What is a s
 
 Actually a lot less - there is a lot of the psyenergy byte that is used up by weapon unleashes and djinn and summons, and enemy moves.. and items .. definitely want to pare down to actually valid options..
 
-TODO write an encoder/decoder for this action space
+TODO write an encoder/decoder for this action space. A pre-written array.. given integer convert to action type, command, target, etc. Also store text Also store text. 
+Separate array of string conversions? A way to start an auto builder? 
 
 ## Reward Function
 What is the reward function? 
