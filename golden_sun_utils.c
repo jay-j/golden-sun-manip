@@ -179,10 +179,21 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
 }
 
 
-uint8_t get_battle_menu(pid_t pid, uint8_t* wram_ptr){
-  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU);
+uint8_t get_battle_menu(Battle_Action* actions){
+  uint8_t result = 0x01;
+  for (size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
+    if (actions[i].unknown4 == 0x80){ // normal readiness case
+      result &= 0x01;
+    }
+    else if (actions[i].action_type == 0x08){ // if character is alseep
+      result &= 0x01;
+    }
+    else{
+      result &= 0x00;
+    }
+  }
   return result;
- }
+}
 
 #define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_INIT 0x347E1
 // are we at an individual character battle menu? e.g. reset action state?

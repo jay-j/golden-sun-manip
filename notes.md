@@ -251,3 +251,58 @@ Track a pool of available equipment. Randomly select the PP-regen item. Then ran
 Bi element selections at maximum. Each character has a "4 slot" and "3 slot" to randomly choose an element. Then within those slots they randomly choose djinn from the appropriate element. This does give access to all classes in GS1.
 
 Implement.. keep track of which djinn are which element and have been allocated. Go through characters one by one. Randomly select an element, then get 4 djinn. Then randomly select and element and get 3 djinn. But need to be sure that the element selection is allowed.
+
+# AI Environment Replication
+Using the Tensorflow and Keras-RL library and "OpenAI Gym". For reinforcement learning applications, it seems like TensorFlow is the recommended option (vs. PyTorch).
+[Video Tutorial Link](https://www.youtube.com/watch?v=bD6V3rcr_54)
+
+Packages from pip
+ - tensorflow
+ - gym
+ - keras
+ - keras-rl2
+
+From the `gym` module, need `Env` as the clas to extend, and `gym.spaces.Discrete`, `gym.spaces.Box` to describe the action or response spaces. 
+
+https://gym.openai.com/docs/
+
+```python
+class BattleEnv(Env):
+  def __init__(self):
+    # define the action space
+    # example uses three possible values.. decrease, increase, stay the same
+    self.action_space = gym.spaces.Discrete(3)
+
+    # define the observation space
+    self.observation_space = Box(low=np.array([0]), high=np.array([100]))
+
+    # length - maximum allowed turns per battle? 
+    self.battle_length = 20
+
+    # reset
+    reset()
+
+  def step(self, action):
+    # return: observation (object), reward (float), done (boolean; time to reset?), info (dict; diagnostic for debugging)
+    pass
+
+  def render(self):
+    pass
+  def reset(self):
+    self.state = number
+    pass
+```
+
+so need to setup an interface where step() can either interact with a saved game, or with a live one?
+wrapper training function also needs to interact.. to either choose an action, or pull one from the save file
+
+
+need to quanity the option space - how many choices are there? discrete or continuous? Choose discrete since there should never be options between psyenergies, etc. So then need to somehow compute the set of discrete actions. 
+
+What is the reward function? 
+Idea: reward after every turn: `sum(ally_health) - sum(enemy_health)`
+- encourages ally health to be high
+- encourages enemy health to be low
+- put in a tuning factor? to adjust the relative weight
+
+
