@@ -233,19 +233,19 @@ wrapper training function also needs to interact.. to either choose an action, o
 
 need to quanity the option space - how many choices are there? discrete or continuous? Choose discrete since there should never be options between psyenergies, etc. So then need to somehow compute the set of discrete actions. 
 
-What is the reward function? 
-Idea: reward after every turn: `sum(ally_health) - sum(enemy_health)`
-- encourages ally health to be high
-- encourages enemy health to be low
-- put in a tuning factor? to adjust the relative weight
-
+`Discrete(n)` space type has *one variable* that can take on `n` possible values; `[0... n-1]`. 
 
 ## State space
-- Character stats & status.
-- (NOT) items
-- active psyenergy list for characters. some kind of pre-cached class lookup?
-- active / possible summons. lookup based on djinn info. allow every possible one to allow for djinn standby on the same turn as summon cast!
-- enemy status & status. 
+- Character stats, status, active psyenergies, not items. (112 numbers per character: 448 total)
+- Djinn statuses (3 per djinn.. 7*4 max djinn in GS1.. 84 numbers)
+- enemy status & status (48 per enemy: 240 total)
+
+Atari playing systems use an `observation space` which is Box(210, 160, 3) ; 210 pixels by 160 pixels by 3 color channels. Each of the ~100k items can have a value (presumably 0-255; simple graphics). And then potentially stack a few layers if velocity tracking is important. 
+
+Stitch my observation space into just a long list of numbers. So Box(772,). Doesn't seem so bad!
+TODO do this!
+
+TODO scrub the Unit struct to see if any can be removed. Maybe some enemy base stats? (leaving the maximum) since their maximum possible is not ever going to be modified during a battle? 
 
 ## Action Space
 - each character, any possible action (except items), include defense (want waiting to heal on lesser monsters to be a good strategy)
@@ -253,3 +253,27 @@ Idea: reward after every turn: `sum(ally_health) - sum(enemy_health)`
 - the psyenergy list only shows what you HAVE NOW, not what you could have if you changed your class with the djinn you have. so this makes a good list of the currently available options. seems to be ordered as it is ordered in the battle menu (danger - some are not battle psyenergies). 
 - the actions all have targets as well. 
 - Ignore items - consumable and thus can't continue indefinitely. 
+- Allow any summon to be requested, to enable pre-casting of summons
+
+Action space is a big `Discrete` space. Just concatenate everything. What is a sensible way of encoding/decoding this?
+- (4) For each character. use true character_ids, auto skip/ignore characters that are unavailable to act
+- (197) expand the action & subaction list! ~~255~~ 151 possible psyenergies + 28 djinn + 16 summons + 1 attack + 1 defend
+- (5) target increment
+
+3940 possible results (though many are invalid..)
+
+Actually a lot less - there is a lot of the psyenergy byte that is used up by weapon unleashes and djinn and summons, and enemy moves.. and items .. definitely want to pare down to actually valid options..
+
+TODO write an encoder/decoder for this action space
+
+## Reward Function
+What is the reward function? 
+Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty invalid action]`
+- encourages ally health to be high
+- encourages enemy health to be low
+- put in a tuning factor? to adjust the relative weight
+make a strong dis-incentive to selecting an invalid input
+
+## Diagnostic Info
+- store factors that go into reward. so the weighting can be adjusted later
+- 
