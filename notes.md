@@ -222,3 +222,60 @@ in battle downed characters have their array set to ff
 have to hit 'a' once to make the first character's action be set to ff; so grab the battle status before this happens
 
 if a character is asleep, then the queue isn't zero'd; instead that character still gets an entry. if a character is downed, then they don't get any entry in the action queue
+
+
+# AI Environment Replication
+Using the Tensorflow and Keras-RL library and "OpenAI Gym". For reinforcement learning applications, it seems like TensorFlow is the recommended option (vs. PyTorch).
+[Video Tutorial Link](https://www.youtube.com/watch?v=bD6V3rcr_54)
+
+Packages from pip
+ - tensorflow
+ - gym
+ - keras
+ - keras-rl2
+
+From the `gym` module, need `Env` as the clas to extend, and `gym.spaces.Discrete`, `gym.spaces.Box` to describe the action or response spaces. 
+
+https://gym.openai.com/docs/
+
+```python
+class BattleEnv(Env):
+  def __init__(self):
+    # define the action space
+    # example uses three possible values.. decrease, increase, stay the same
+    self.action_space = gym.spaces.Discrete(3)
+
+    # define the observation space
+    self.observation_space = Box(low=np.array([0]), high=np.array([100]))
+
+    # length - maximum allowed turns per battle? 
+    self.battle_length = 20
+
+    # reset
+    reset()
+
+  def step(self, action):
+    # return: observation (object), reward (float), done (boolean; time to reset?), info (dict; diagnostic for debugging)
+    pass
+
+  def render(self):
+    pass
+  def reset(self):
+    self.state = number
+    pass
+
+
+```
+so need to setup an interface where step() can either interact with a saved game, or with a live one?
+wrapper training function also needs to interact.. to either choose an action, or pull one from the save file
+
+
+need to quanity the option space - how many choices are there? discrete or continuous? Choose discrete since there should never be options between psyenergies, etc. So then need to somehow compute the set of discrete actions. 
+
+What is the reward function? 
+Idea: reward after every turn: `sum(ally_health) - sum(enemy_health)`
+- encourages ally health to be high
+- encourages enemy health to be low
+- put in a tuning factor? to adjust the relative weight
+
+
