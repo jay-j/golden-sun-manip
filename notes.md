@@ -1,58 +1,12 @@
-##
-Isaac Health. 
-- Address: 8772c78, type: int16, offset: 629c78 seems to work? except if I edit, it changes to the desired value for a bit, then it changes back to max health..
-- int32 does not work, int64 does not work, would be huge
-- int8 would be too small
-
-Try Isaac Psyenergy
-- Address: 8772c7a, type: int16, offset: 629c7a
-Garet psyenergy
-- Address: 8772dc6, type: int16, offset: 629dc6
-so the character object is 332 bytes.
-
-This continues to be health outside of battle. When outside of battle CAN manually modify the game values. And remains good outside of battles.
-
-The GBA has a 32-bit processor; pointers likely there! 4 bytes
+# Game Memory
+- Commonly uses `uint8_t`, `uint16_t`, `uint32_t` representations. 
+- Does use ASCII for strings. E.g. for "Isaac"
+- The GBA processor is 32-bit. So looking for 32-bit pointers. 
+- Allied character struct (332 byte) is loaded directly from the savefile into wram; so all the representations and offsets here seem to be correct: https://gamefaqs.gamespot.com/gba/468548-golden-sun/faqs/43776
+- Items appear in inventory slot order. 
 
 
-these addresses are no longer valid after game reboot.. addresses are not relative in any kind of useful way.. BUT the "offset" searched value still works. So for the new game... 0x81c9c78 - 0x629c78 = 0x7ba0000
-
-it does seem to use ASCII internally e.g. for Isaac's name. 
-So Flint becomes 0x 46 6c 69 6e 74
-Can't seem to find this... ? Not sure how the string searches are working. Not sure how to make it go into hex search mode. 
-
-Isaac name is 0x7036740-0x6a0d000 = 
-no... the name *is* there but better to use the name that's co-located with a bunch of other character info. 0x7036c40
-
-Isaac earth resistance AFTER djinn 0x7036c8a - 0x6a0d000 = 
-
-
-in this guide https://gamefaqs.gamespot.com/gba/468548-golden-sun/faqs/43776
-the characters seem offset by 332 bytes also!
-
-isaac class: 0x7036d69 - 0x6a0d000. when the guide says stored at 0x639.. 
-
-assume that the game runs by just loading directly character data from disc to ram? so the representation is 1:1? 
-so got a "base savesate memory" by 0x7036d69 (isaac class) subtract 0x639 (isaac class location in guide)
-Then go forwards by 0x5e8 (to isaac's weapons). Success! 
-
-items show up in inventory slot order. 
-
-psyenergy does work. 
-
-soft (A+B+START+SELECT) reset of the system does seem to leave the values in ram. and does reset to remove the extra psyenergies that I added, removes the extra stuff. 
-
-can I find info on the creatures being fought? 
-Mauler = 4D 61 75 6C
-yes! Can find that string in memory. here.. 0x7067250. 
-offset from the other enemy 0x7067100.. so the enemy structure has size 0x150 (dec 336)
-is this just the same structure as for players but slightly larget to have room for a bigger name? meaning can enemies have items to use? equipment? 
-TODO: look up known stats (from wiki) within the enemy structure to figure out the arrangement of that structure? 
-
-ignore items - consumable and thus can't continue indefinitely. 
-
-is there an enemy counter? enemy alive status? 
-
+# Memory Tools
 PINCE uses the first pid for the mednafen process. if mednafen pid is 1595...
 get pid with `$pidof mednafen`
 then `$cat /proc/1595/maps | grep heap`
@@ -60,9 +14,18 @@ shows the interesting stuff will start at 0x07f3b000 ! perfect.
 the start of character data is *not* some constant offset from mednafen start between reboots of mednafen.
 `https://www.systutorials.com/docs/linux/man/2-process_vm_readv/`
 
+# Finding WRAM
+- Important addresses seem to be constant in `wram` but not within the emulator heap; have to find the `wram` start upon every emulator startup. Soft reset (A+B+START+SELECT) reset of the system does seem to leave the values in ram. and does reset to remove the extra psyenergies that I added, removes the extra stuff. 
+
+what if there is a big/little endian discrepancy? So the number in raw memory would appear backwards?
+yes! there is *something* here searching like this. found three values. but those don't seem to lead anywhere (could be offset from the true pointer..)
+
+## issue with memory
+finding memory approach doesn't work in the virtual environment. it seems that I need the *last* copy of Isaac-Garet 332 bytes? Vs. the first? And there are many copies of that unit structure throughout the game's memory - how to find the correct one?
+If I use the last one, then everything else does seem to fall into place...
 
 
-## TODO
+# TODO
 - determine memory address auto finding. Is the variability within golden sun, or within mednafen? 
 - demo utility: put up on a GUI live updating character stats, allows you to choose character at will. Nuklear gui? 
 - find where the djinn recovery info is stored
@@ -70,19 +33,6 @@ the start of character data is *not* some constant offset from mednafen start be
 - find out where monster quantities are listed
 - find out where active psyenergy option selection list is?
 
-
-## State space
-- Character stats & status.
-- (NOT) items
-- active psyenergy list for characters. some kind of pre-cached class lookup?
-- active / possible summons. lookup based on djinn info. allow every possible one to allow for djinn standby on the same turn as summon cast!
-- enemy status & status. 
-
-## Action Space
-- each character, any possible action (except items), include defense (want waiting to heal on lesser monsters to be a good strategy)
-- how to train on action space since the options will change as a result of the state (class)
-- the psyenergy list only shows what you HAVE NOW, not what you could have if you changed your class with the djinn you have. so this makes a good list of the currently available options. seems to be ordered as it is ordered in the battle menu (danger - some are not battle psyenergies). 
-- the actions all have targets as well. 
 
 ## Enemy Stuff
 Ascii characters. Width is 332 bytes! First entry is the one on the left.
@@ -96,7 +46,7 @@ HP gets set to zero though.
 
 There must somewhere be a "fainted" modifier - I can't seem to revive isaac simply by raising his health.
 
-##
+# Djinn
 the djinn recovery counters get messed up by setting new djinn in battle. 
 they can count down multiple djinn simultaneously.. so likely binary encoding of which djinn are in which status, it just gets processed? 
 would mean recovery is a two byte value though 
@@ -128,7 +78,7 @@ According to [this forum post](https://gamefaqs.gamespot.com/boards/468548-golde
 
 Confirmed - those 4th byte is the status. Not cleared if not in use. `ff` if standby, `fe` during summon casting, some positive value (`02`, `03`, etc.) for turn countdown. 
 
-## Battle State
+# Battle State
 byte `0x6aa8104` seems to be 1 when waiting for action input, 0 when not (battle progressing, smash A)
 In this example the heap start is `0x0644d000`. That's 199508 bytes after Isaac (player 1) start.
 
@@ -146,7 +96,32 @@ Push A twice in between battles...
 
 End of battle.. watch the enemy status. After sum(enemy status) goes to zero, push A once to get past 'party goes down' text, that's it. Then are out of battle, push A twice to restart. 
 
-## Sending Commands
+##  Actions
+Looking for start points
+With mia first in the party, looking at her psyenergy command gives 0x79294c0
+there appears to be a 16-byte structure (increment +0x10).. that is populated in order of party members, but then after the final party member gets re-ordered according to who is going to act first
+
+the structure is all entities in the battle - both enemies AND players
+
+look two bytes before that. 0x79294be
+00 = attack
+01 = psyenergy
+02 = item
+03 = defend
+04 = 
+05 = djinn
+
+the character id part is the start of the queue structure?
+all these are set ff
+as you set each character they move from ff to the character_id (e.g. mia=03 regardless of party)
+
+in battle downed characters have their array set to ff
+
+have to hit 'a' once to make the first character's action be set to ff; so grab the battle status before this happens
+
+if a character is asleep, then the queue isn't zero'd; instead that character still gets an entry. if a character is downed, then they don't get any entry in the action queue
+
+# Sending Key Press Commands
 https://tronche.com/gui/x/xlib/event-handling/XSendEvent.html
 https://stackoverflow.com/questions/1262310/simulate-keypress-in-a-linux-c-console-application
 http://t-sato.in.coocan.jp/xvkbd/events.html
@@ -173,58 +148,17 @@ Looked at a bunch of memory addresses. Seems there's nothing within GS (at least
 
 Set *all* the identified values at the same time (during game pause?) also not successful. 
 
-## 
-Issue with the battle menu number. Freezes in "window zoom in" scenarios, either by ally attack or by enemy attack. 
-
-## issue with memory
-finding memory approach doesn't work in the virtual environment. it seems that I need the *last* copy of Isaac-Garet 332 bytes? Vs. the first? And there are many copies of that unit structure throughout the game's memory - how to find the correct one?
-If I use the last one, then everything else does seem to fall into place...
-
-## VM Setup
-Want to setup the NAT approach. 10.0.1.1 and 10.1.10... unique network between the host and a single VM instance.
-
-(not "NAT network")
 
 ## pygame keys
 https://www.pygame.org/docs/ref/key.html
 
-## looking for more reliable start points
-WRAM is at 0x6a3e370
-so character1 is at +1280 bytes; 0x6A3E870 this seems to be the case, oneshot data looks ok
-0x06 A3 E8 70 .... is not found anywhere :(
-
-try decrementing by one a few times 6f, 6e, 6d, 6c, 6b, 6a, 69.. nothing found
-
 
 https://github.com/NotFx/Bizhawk-GS-TBS-Utility-Script
 
-what if there is a big/little endian discrepancy? So the number in raw memory would appear backwards?
-yes! there is *something* here searching like this. found three values. but those don't seem to lead anywhere (could be offset from the true pointer..)
 
-## 
-Looking for start points
-With mia first in the party, looking at her psyenergy command gives 0x79294c0
-there appears to be a 16-byte structure (increment +0x10).. that is populated in order of party members, but then after the final party member gets re-ordered according to who is going to act first
 
-the structure is all entities in the battle - both enemies AND players
 
-look two bytes before that. 0x79294be
-00 = attack
-01 = psyenergy
-02 = item
-03 = defend
-04 = 
-05 = djinn
-
-the character id part is the start of the queue structure?
-all these are set ff
-as you set each character they move from ff to the character_id (e.g. mia=03 regardless of party)
-
-in battle downed characters have their array set to ff
-
-have to hit 'a' once to make the first character's action be set to ff; so grab the battle status before this happens
-
-if a character is asleep, then the queue isn't zero'd; instead that character still gets an entry. if a character is downed, then they don't get any entry in the action queue
+# Challenge Setup
 
 ## Items
 Concept: Randomize items (from a set of ~endgame options) and djinn (all djinn, randomize distribution)!
@@ -252,7 +186,7 @@ Bi element selections at maximum. Each character has a "4 slot" and "3 slot" to 
 
 Implement.. keep track of which djinn are which element and have been allocated. Go through characters one by one. Randomly select an element, then get 4 djinn. Then randomly select and element and get 3 djinn. But need to be sure that the element selection is allowed.
 
-# AI Environment Replication
+# Machine Learning Environment / Approach
 Using the Tensorflow and Keras-RL library and "OpenAI Gym". For reinforcement learning applications, it seems like TensorFlow is the recommended option (vs. PyTorch).
 [Video Tutorial Link](https://www.youtube.com/watch?v=bD6V3rcr_54)
 
@@ -306,3 +240,16 @@ Idea: reward after every turn: `sum(ally_health) - sum(enemy_health)`
 - put in a tuning factor? to adjust the relative weight
 
 
+## State space
+- Character stats & status.
+- (NOT) items
+- active psyenergy list for characters. some kind of pre-cached class lookup?
+- active / possible summons. lookup based on djinn info. allow every possible one to allow for djinn standby on the same turn as summon cast!
+- enemy status & status. 
+
+## Action Space
+- each character, any possible action (except items), include defense (want waiting to heal on lesser monsters to be a good strategy)
+- how to train on action space since the options will change as a result of the state (class)
+- the psyenergy list only shows what you HAVE NOW, not what you could have if you changed your class with the djinn you have. so this makes a good list of the currently available options. seems to be ordered as it is ordered in the battle menu (danger - some are not battle psyenergies). 
+- the actions all have targets as well. 
+- Ignore items - consumable and thus can't continue indefinitely. 
