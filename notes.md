@@ -198,6 +198,9 @@ try decrementing by one a few times 6f, 6e, 6d, 6c, 6b, 6a, 69.. nothing found
 
 https://github.com/NotFx/Bizhawk-GS-TBS-Utility-Script
 
+what if there is a big/little endian discrepancy? So the number in raw memory would appear backwards?
+yes! there is *something* here searching like this. found three values. but those don't seem to lead anywhere (could be offset from the true pointer..)
+
 ## 
 Looking for start points
 With mia first in the party, looking at her psyenergy command gives 0x79294c0
@@ -222,3 +225,29 @@ in battle downed characters have their array set to ff
 have to hit 'a' once to make the first character's action be set to ff; so grab the battle status before this happens
 
 if a character is asleep, then the queue isn't zero'd; instead that character still gets an entry. if a character is downed, then they don't get any entry in the action queue
+
+## Items
+Concept: Randomize items (from a set of ~endgame options) and djinn (all djinn, randomize distribution)!
+Use controlled memory overrides to do this. 
+
+*Need* to have some PP-regenerating items to keep the action space rich.
+In GS1, these are all artifacts (only one available within the game). Guarantee every one is given to the party, randomize who gets what to the best extent allowable. 
+| Item Name | Equip Slot | Regeneration | Isaac | Garet | Ivan | Mia |
+|-----------|------------|--------------|-------|-------|------|-----|
+| Magical Cassock | body | 2 PP/turn |  |   |  x |  x |
+| Lucky Cap | head | 2 PP/turn | x | x | x | x |
+| Mythril Circlet | head | 3 PP/turn| | | x | x |
+| Thunder Crown (cursed) | head | 4 PP/turn | x | x | x | x |
+
+Cursed items applicable for Isaac & Garret:
+- Demon Axe (considered inferior...)
+- Wicked Mace
+- Muramasa
+- Demon Mail (meh)
+
+Track a pool of available equipment. Randomly select the PP-regen item. Then randomly select the rest of the equipment, using filters to downselect (build a list that meet a filter, then pick an  integer) repeat.
+
+## Djinn Randomizer
+Bi element selections at maximum. Each character has a "4 slot" and "3 slot" to randomly choose an element. Then within those slots they randomly choose djinn from the appropriate element. This does give access to all classes in GS1.
+
+Implement.. keep track of which djinn are which element and have been allocated. Go through characters one by one. Randomly select an element, then get 4 djinn. Then randomly select and element and get 3 djinn. But need to be sure that the element selection is allowed.
