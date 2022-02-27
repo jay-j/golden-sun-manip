@@ -267,13 +267,34 @@ Actually a lot less - there is a lot of the psyenergy byte that is used up by we
 TODO write an encoder/decoder for this action space. A pre-written array.. given integer convert to action type, command, target, etc. Also store text Also store text. 
 Separate array of string conversions? A way to start an auto builder? 
 
+NN representation (0-n integer) --> lookup table --> 
+Table is 3D array? Or have some way to cut it down ahead of time.. back out target and character first, then just have a medium complexity table dealing with the action_type/subaction values.
+
+```C
+action_state_index = actor_id*QTY_TARGETS*QTY_ACTIONS + target_id*QTY_ACTIONS + action_id;
+```
+given an integer, need to figure out what the component parts are
+```C
+actor_id = floor(action_state_index / (QTY_TARGETS * QTY_ACTIONS));
+actor_id_rem = action_state_index - actor_id * QTY_TARGETS * QTY_ACTIONS;
+target_id = floor(actor_id_rem / (QTY_ACTIONS));
+action_id = actor_id_rem - target_id * QTY_ACTIONS;
+```
+TODO is there a higher efficiency algorithm for doing this? Probably I should not care..
+
+NO - for each player's possible actions (197 action x 5 targets = 985) every other player has that many options as well. So 985^4 = **941 billion**. That is the real possible action space. 
+
+What if you limit the action space? Only 12 psyenergies + 7 djinn + 16 summons + 2 = 37.. Five targets means each character's action space is 185. 185^4 = **1.2 billion**. Still far too many.
+
+Can't I just have four discrete outputs? Quick searches look like complicated / maybe not. Maybe with a custom branching network architecture.
+
 ## Reward Function
 What is the reward function? 
 Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty invalid action]`
 - encourages ally health to be high
 - encourages enemy health to be low
-- put in a tuning factor? to adjust the relative weight
-make a strong dis-incentive to selecting an invalid input
+- put in tuning factors to adjust the relative weight
+- a strong dis-incentive to selecting an invalid input
 
 ## Diagnostic Info
 - store factors that go into reward. so the weighting can be adjusted later
