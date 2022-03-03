@@ -97,8 +97,8 @@ typedef struct __attribute__((__packed__)) Unit {
   uint8_t psyseal_duration; // TODO check
   uint8_t psyseal; 
 
-  uint8_t regenerate; // unused battle effect. zero if disabled. if >0 represents the number of turns the ally recovers health
-  uint8_t reflect; // unused battle effect. zero if disabled. if >0 represents the number of turns remaining for the effect to last
+  uint8_t regenerate_duration; // unused battle effect. zero if disabled. if >0 represents the number of turns the ally recovers health
+  uint8_t reflect_duration; // unused battle effect. zero if disabled. if >0 represents the number of turns remaining for the effect to last
 
   uint8_t evil_spirit;
   uint8_t premonition; // "downed in N turns"
