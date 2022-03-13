@@ -80,7 +80,7 @@ uint32_t djinn_to_x86(uint32_t x){
 
 
 void golden_sun_print_unknowns(Unit* unit){
-  Unknown unknowns[10];
+  Unknown unknowns[9];
 
   // todo populate unknowns array somewhere else..
   unknowns[0].offset = 20;
@@ -103,17 +103,15 @@ void golden_sun_print_unknowns(Unit* unit){
   // some kind of battle status
   unknowns[6].offset = 313;
   unknowns[6].length = 1;
-  unknowns[7].offset = 318;
+  unknowns[7].offset = 322;
   unknowns[7].length = 2;
-  unknowns[8].offset = 322;
-  unknowns[8].length = 2;
 
   // end stuff no idea
-  unknowns[9].offset = 328;
-  unknowns[9].length = 4;
+  unknowns[8].offset = 328;
+  unknowns[8].length = 4;
 
 
-  for (size_t i=0; i<10; ++i){
+  for (size_t i=0; i<9; ++i){
     printf("Unknown %ld:  ", i);
     for (size_t j=0; j<unknowns[i].length; ++j){
       uint8_t* ptr = (uint8_t*) unit;
@@ -334,6 +332,7 @@ uint8_t* find_wram(pid_t pid){
       printf("search complete!\n");
       search_complete += 1;
       solution = found_p1;
+      break;
     }
     //else{
       buff = found_p1 + 1;
