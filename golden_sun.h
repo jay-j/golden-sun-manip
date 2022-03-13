@@ -42,6 +42,7 @@ typedef struct __attribute__((__packed__)) Unit {
   uint16_t agility_base;
   uint8_t luck_base;
   uint8_t _unknown2[5];
+  // uint8_t : 5; // TODO consider using unnamed bitfields to pad the memory instead
 
   ElementalAffinity elemental_base[ELEMENTS]; // power, resistance
   
@@ -111,6 +112,7 @@ typedef struct __attribute__((__packed__)) Unit {
   uint8_t boost_agility;
 
   uint8_t _unknown10[4];
+  // TODO look at list of unacquirable psyenergies to see if those correspond to any of these statuses
 
 } Unit;
 
@@ -133,11 +135,11 @@ typedef struct __attribute__((__packed__)) Djinn_Queue_Item {
 
 // starting at WRAM 0x02000254
 #define MEMORY_OFFSET_DJINN_QUEUE 0x254
+#define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354
 #define DJINN_QUEUE_MAX_LENGTH 64
 typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough for the full TLA party?
-// queue counter is 256 bytes after queue start (0x02000354)
-#define MEMORY_OFFSET_DJINN_QUEUE_LENGTH 0x354
 
+// if zero, NOT listening for player input in battle
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
 #define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
