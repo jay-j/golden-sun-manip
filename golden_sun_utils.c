@@ -264,6 +264,32 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
 
 // 0x01983a08 this static memory address lists the moving address for wram start
 uint8_t* find_wram(pid_t pid){
+
+  // read line in /proc/$pid/maps to figure out where the [heap] is
+  char filename_map[64];
+  sprintf(filename_map, "/proc/%d/maps", pid);
+  FILE* fd_map = fopen(filename_map, "r");
+  
+  char line_raw[128];
+  char line_prev[128];
+  char* fgets_status;
+  fgets_status = fgets(line_raw, sizeof(line_raw), fd_map);
+  while (fgets_status != NULL){
+    if (strstr(line_raw, "[heap]") != NULL){
+      printf("heap line in /proc/[pid]/maps: %s", line_raw);
+      printf("  the previous line is %s", line_prev);
+      break;
+    }
+    memcpy(line_prev, line_raw, 128);
+    fgets_status = fgets(line_raw, sizeof(line_raw), fd_map);
+  }
+  assert(fgets_status != NULL);
+  
+  char* line_working = line_prev;
+  char* mem_ref_str = strtok_r(line_working, "-", &line_working);
+  uint64_t mem_ref = strtol(mem_ref_str, NULL, 16);
+  fclose(fd_map);
+
   uint64_t mem_adr = 0;
   uint8_t* mem_adr_ptr = (uint8_t*) &mem_adr;
 
@@ -271,7 +297,7 @@ uint8_t* find_wram(pid_t pid){
   local[0].iov_base = mem_adr_ptr;
   local[0].iov_len = 4;
   struct iovec remote[1];
-  remote[0].iov_base = (uint8_t*) 0x01983a08; // TODO magic value
+  remote[0].iov_base = (uint8_t*) 0x2D3A08 + mem_ref; // TODO magic value
   remote[0].iov_len = 4;
   ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
   assert(n_read == 4);
