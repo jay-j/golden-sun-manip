@@ -297,7 +297,7 @@ Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty 
 - encourages ally health to be high
 - encourages enemy health to be low
 - put in tuning factors to adjust the relative weight
-- a strong dis-incentive to selecting an invalid input
+- a strong dis-incentive to selecting an invalid input. split this up so invalid djinn on invalid target is worse than just invalid djinn?
 
 ## Diagnostic Info
 - store factors that go into reward. so the weighting can be adjusted later

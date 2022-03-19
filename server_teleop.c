@@ -123,12 +123,14 @@ FILE* logfile_init(){
 void logfile_write_action(FILE* fd){
   printf("[LOG] WRITE ACTION\n");
   fprintf(fd, "action here\n");
+  // TODO binary blob, just send the raw ML_Action_State struct
 }
 
 
 void logfile_write_state(FILE* fd){
   printf("[LOG] WRITE STATE\n");
   fprintf(fd, "state here\n");
+  // TODO binary blob, just send the raw ML_Observation_State struct
 }
 
 

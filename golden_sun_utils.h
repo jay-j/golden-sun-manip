@@ -176,6 +176,25 @@ typedef struct __attribute__((__packed__)) Export_Djinn_List{
 // a djinn list for every character
 typedef Export_Djinn_List Export_Djinn[4];
 
+typedef struct __attribute__((__packed__)) ExportAction {
+  uint8_t actor;
+  uint8_t action_type;
+  uint8_t action_cmd;
+  uint8_t djinn_element;
+  uint8_t target;
+} ExportAction;
+
+// the memory blobs to save as ML observation and action space
+typedef struct __attribute__((__packed__)) ML_Observation_Space {
+  ExportAlly allies[4];
+  ExportEnemy enemies[5];
+  Export_Djinn_List djinn;
+} ML_Observation_Space;
+
+typedef struct __attribute__((__packed__)) ML_Action_Space {
+  ExportAction actions[4];
+} ML_Action_Space;
+
 void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);
 
 
