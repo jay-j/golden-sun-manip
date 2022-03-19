@@ -288,6 +288,9 @@ What if you limit the action space? Only 12 psyenergies + 7 djinn + 16 summons +
 
 Can't I just have four discrete outputs? Quick searches look like complicated / maybe not. Maybe with a custom branching network architecture.
 
+TensorFlow seems to have a MultiDiscrete space type? Also Discrete
+Choice of algorithm is really about the *action* space (not so much the *observation* space).
+
 ## Reward Function
 What is the reward function? 
 Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty invalid action]`
