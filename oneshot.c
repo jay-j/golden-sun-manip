@@ -72,13 +72,13 @@ int main(int argc, char* argv[]){
   Unit allies[4]; 
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
   for(int i=0; i<4; ++i){
-    printf("character: %s \thealth: %u \tstatus: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
+    printf("character: %5s \thealth: %4u \tstatus: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
   }
 
   Unit enemies[5];
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies, 5);
   for (int i=0; i<5; ++i){
-    printf("enemy: %s        health: %u    status: %u\n", enemies[i].name, enemies[i].health_current, enemies[i].battle_status);
+    printf("enemy: %15s        health: %4u    status: %u\n", enemies[i].name, enemies[i].health_current, enemies[i].battle_status);
   }
 
   //printf("isaac unknown stuff\n");
