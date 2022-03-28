@@ -21,9 +21,6 @@ uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr);
 uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr);
 uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, int64_t offset);
 
-// the names to use for the memory search. assumes name limit of 5 characters
-#define NAME_P1 "Isaac"
-#define NAME_P2 "Garet"
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n);
 uint8_t* find_wram(pid_t pid);
 pid_t find_pid();
@@ -174,7 +171,7 @@ typedef struct __attribute__((__packed__)) Export_Djinn_List{
 } Export_Djinn_List;
 
 // a djinn list for every character
-typedef Export_Djinn_List Export_Djinn[4];
+typedef Export_Djinn_List Export_Djinn[ALLIES];
 
 typedef struct __attribute__((__packed__)) ExportAction {
   uint8_t actor;
@@ -186,13 +183,13 @@ typedef struct __attribute__((__packed__)) ExportAction {
 
 // the memory blobs to save as ML observation and action space
 typedef struct __attribute__((__packed__)) ML_Observation_Space {
-  ExportAlly allies[4];
-  ExportEnemy enemies[5];
+  ExportAlly allies[ALLIES];
+  ExportEnemy enemies[ENEMIES_MAX];
   Export_Djinn_List djinn;
 } ML_Observation_Space;
 
 typedef struct __attribute__((__packed__)) ML_Action_Space {
-  ExportAction actions[4];
+  ExportAction actions[ALLIES]; // TODO how to handle kite? or stunned characters?
 } ML_Action_Space;
 
 void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);
@@ -210,5 +207,7 @@ uint32_t djinn_to_x86(uint32_t x);
 
 uint32_t health_total(Unit* units, size_t n);
 void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* actions);
+
+void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export);
 
 #endif // header guards
