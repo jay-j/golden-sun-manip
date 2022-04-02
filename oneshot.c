@@ -56,11 +56,8 @@ void print_battle_action_unknowns(Battle_Action* action){
 
 
 int main(int argc, char* argv[]){
-  if (argc != 2){
-    printf("Usage: sudo ./scan\n");
-  }
 
-  printf("character array is size.... %ld\n", sizeof(Unit));
+  // printf("character array is size.... %ld\n", sizeof(Unit));
   assert(sizeof(Unit) == 332);
 
   // try and convert command line argument into pid
@@ -72,21 +69,44 @@ int main(int argc, char* argv[]){
   Unit allies[4]; 
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
   for(int i=0; i<4; ++i){
-    printf("character: %s \thealth: %u \tstatus: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status);
+    printf("character: %5s \thealth: %u \tstatus: %u\t agility: %u\n", allies[i].name, allies[i].health_current, allies[i].battle_status, allies[i].agility_max);
   }
-
+  printf("\n");
+  
+  uint32_t weakness[ELEMENTS];
+  for(int i=0; i<ELEMENTS; ++i){
+    weakness[i] = 0;
+  }
   Unit enemies[5];
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies, 5);
+  printf("ENEMIES:                                     venus  mrcry  mars   jupiter\n");
   for (int i=0; i<5; ++i){
-    printf("enemy: %s        health: %u    status: %u\n", enemies[i].name, enemies[i].health_current, enemies[i].battle_status);
+    if (enemies[i].health_current == 0){
+      continue;
+    }
+    printf("%12s \thealth: %u \tresistances: ", enemies[i].name, enemies[i].health_current);
+    for (int e=0; e<ELEMENTS; ++e){
+      printf("%3u    ", enemies[i].elemental_max[e].resistance);
+      weakness[e] += enemies[i].health_current * enemies[i].elemental_max[e].resistance;
+    }
+    printf("\n");
   }
+  printf("\n");
+
+
+  printf("                    venus   mrcry    mars   jupiter\n");
+  printf("Health*Resistances: ");
+  for (int e=0; e<ELEMENTS; ++e){
+    printf("%5u   ", weakness[e]/100);
+  }
+  printf("\n\n");
 
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
 
   uint8_t cmd = get_battle_menu_character_init(pid, wram_ptr);
-  uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
-  printf("Character %u menu state? %u\n", char_id, cmd);
+  // uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
+  printf("Character __ menu state? %u\n", cmd);
 
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);
