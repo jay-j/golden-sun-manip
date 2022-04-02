@@ -203,6 +203,7 @@ uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr){
   return result;
 }
 
+// TODO negative number indicates this is not in WRAM but is somewhere else
 #define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID (-0x3AAB78)
 uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr){
   printf("wram = %p .... battle menu character id at %p\n", wram_ptr, wram_ptr+MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
@@ -260,7 +261,6 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
 
   return haystack;
 }
-
 
 // 0x01983a08 this static memory address lists the moving address for wram start
 uint8_t* find_wram(pid_t pid){
@@ -413,3 +413,15 @@ void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* action
   ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
   assert(n_read == remote[0].iov_len);
 }
+
+
+// convert gba-format action struct to minimal representation for ML in copy operation
+void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export){
+  for (size_t a=0; a<ALLIES; ++a){
+    actions_export[a].actor = actions_raw[a].actor_id;
+    actions_export[a].action_type = actions_raw[a].action_type;
+    actions_export[a].action_cmd = actions_raw[a].command;
+    actions_export[a].djinn_element = actions_raw[a].element;
+    actions_export[a].target = actions_raw[a].target;
+  }
+} 

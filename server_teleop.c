@@ -120,16 +120,27 @@ FILE* logfile_init(){
 }
 
 
-void logfile_write_action(FILE* fd){
+void write_binary(FILE* fd, uint8_t* data, size_t length){
+  for (size_t i=0; i<length; ++i){
+    fputc((char) *data, fd);
+    ++data;
+  }
+  fprintf(fd, "\n");
+}
+
+
+void logfile_write_action(FILE* fd, ML_Action_Space* act){
   printf("[LOG] WRITE ACTION\n");
   fprintf(fd, "action here\n");
+  write_binary(fd, (uint8_t*) act, sizeof(ML_Action_Space));
   // TODO binary blob, just send the raw ML_Action_State struct
 }
 
 
-void logfile_write_state(FILE* fd){
+void logfile_write_state(FILE* fd, ML_Observation_Space* obs){
   printf("[LOG] WRITE STATE\n");
   fprintf(fd, "state here\n");
+  write_binary(fd, (uint8_t*) obs, sizeof(ML_Observation_Space));
   // TODO binary blob, just send the raw ML_Observation_State struct
 }
 
@@ -170,9 +181,11 @@ int main(int argc, char* argv[]){
   // make the golden sun data structures
   Unit allies_raw[ALLIES];
   Unit enemies_raw[ENEMIES_MAX];
-  ExportAlly allies_send[ALLIES];
-  ExportEnemy enemies_send[ENEMIES_MAX];
   Battle_Action actions_raw[BATTLE_ACTION_QUEUE_MAX_LENGTH];
+
+  ML_Observation_Space observation_space;
+
+  ML_Action_Space action_space;
 
   // log file pointer
   FILE* logfile;
@@ -208,8 +221,9 @@ int main(int argc, char* argv[]){
     // TODO battle action list
 
     // make nice states to send
-    export_copy_allies(pid, wram_ptr, allies_raw, allies_send);
-    export_copy_enemies(enemies_raw, enemies_send);
+    export_copy_allies(pid, wram_ptr, allies_raw, observation_space.allies);
+    export_copy_enemies(enemies_raw, observation_space.enemies);
+    get_djinn(pid, wram_ptr, allies_raw, &observation_space.djinn);
 
     ////////// for normal gameplay //////////
     if (state == STATE_PASSTHRU){
@@ -237,7 +251,7 @@ int main(int argc, char* argv[]){
       printf("\n");
 
       // TODO write state
-      logfile_write_state(logfile);
+      logfile_write_state(logfile, &observation_space);
 
       // get the initial state; the enemy input data
       state = STATE_BATTLE_CMD;
@@ -250,7 +264,9 @@ int main(int argc, char* argv[]){
       // upon leaving this state, save the input action dataset
       if (get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU) == 0){
         printf("  end listening for player input in battle\n");
-        logfile_write_action(logfile);
+        get_battle_action_queue(pid, wram_ptr, actions_raw);
+        export_action_state(actions_raw, action_space.actions); 
+        logfile_write_action(logfile, &action_space);
         state = STATE_BATTLE_WATCH;
       }
     }
@@ -277,7 +293,7 @@ int main(int argc, char* argv[]){
       printf("STATE: BATTLE ENDED!\n");
       // TODO log state
       // TODO close log file
-      logfile_write_state(logfile);
+      logfile_write_state(logfile, &observation_space);
       logfile_close(logfile);
 
       state = STATE_PASSTHRU;

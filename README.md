@@ -3,6 +3,13 @@ Having some fun with the GBA Game [Golden Sun](https://en.wikipedia.org/wiki/Gol
 
 The unit struct is 332 bytes in both GS1 and TLA. 
 
+# 
+## Memory
+The GBA allocates memory mapped blocks to different regions:
+- ROM starts at `0x08000000`. So `0x12` in the ROM is found in GBA memory at `0x08000012`.
+- EWRAM starts at `0x02000000`.
+- IRAM starts at `0x03000000`. 
+
 ## Locating in Memory
 Many (all?) significant values are stored at static memory addresses within `WRAM`, the GBA's original memory. So the challenge is to locate where the start of `WRAM` is within the emulator's heap. I use character names and the size of the unit struct: find where in memory the string "Isaac" starts 332 bytes before the string "Garet". The start of "Isaac" is 1280 bytes after the start of `WRAM 0x2000000`, which seems to be the commonly used memory coordinate system. From here, several areas of memory are accessed in order to extract a full battle state:
 - Djinn recovery/standby queue. Queue length at `+0x354`, queue of 4-byte elements starting at `+0x254`.
