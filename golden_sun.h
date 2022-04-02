@@ -199,5 +199,7 @@ typedef struct __attribute__((__packed__)) Battle_Action {
 
 } Battle_Action; // 16 bytes total (stride 0x10) 
 
+// got WRAM 0x63bc2f0 and this at 0x63bc7da
+#define MEMORY_OFFSET_ARENA_BATTLES_WON (0x4EA)
 
 #endif // header guard
