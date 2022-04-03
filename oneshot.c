@@ -77,6 +77,7 @@ int main(int argc, char* argv[]){
   for(int i=0; i<ELEMENTS; ++i){
     weakness[i] = 0;
   }
+  uint32_t weakness_min = 99999999;
   Unit enemies[5];
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies, 5);
   printf("ENEMIES:                                     venus  mrcry  mars   jupiter\n");
@@ -93,13 +94,19 @@ int main(int argc, char* argv[]){
   }
   printf("\n");
 
+  // figure out which element is weakest
+  for (int e=0; e<ELEMENTS; ++e){
+    if (weakness[e] < weakness_min){
+      weakness_min = weakness[e];
+    }
+  }
 
   printf("                    venus   mrcry    mars   jupiter\n");
   printf("Health*Resistances: ");
   for (int e=0; e<ELEMENTS; ++e){
-    printf("%5u   ", weakness[e]/100);
+    printf("%5u   ", 100*weakness[e]/weakness_min);
   }
-  printf("\n\n");
+  printf("   (normalized)\n\n");
 
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
