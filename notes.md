@@ -302,3 +302,10 @@ Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty 
 ## Diagnostic Info
 - store factors that go into reward. so the weighting can be adjusted later
 - 
+# Take 2
+Use tinygrad to try and reduce the code bloat overhead.
+As input:
+- the key values pulled from memory
+- full screengrab; reduce data required using SVD?
+as output; the action space:
+- which button to push: d-pad (4), a button (1). B button? Idea is that training might be more feasible actually by reducing the action space.

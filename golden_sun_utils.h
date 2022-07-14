@@ -186,10 +186,16 @@ typedef struct __attribute__((__packed__)) ML_Observation_Space {
   ExportAlly allies[ALLIES];
   ExportEnemy enemies[ENEMIES_MAX];
   Export_Djinn_List djinn;
+  // TODO screencap
+  // TODO some battle menu state observations
 } ML_Observation_Space;
 
 typedef struct __attribute__((__packed__)) ML_Action_Space {
-  ExportAction actions[ALLIES]; // TODO how to handle kite? or stunned characters?
+  int8_t dpad_up;
+  int8_t dpad_down;
+  int8_t dpad_left;
+  int8_t dpad_right;
+  int8_t button_a;
 } ML_Action_Space;
 
 void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);

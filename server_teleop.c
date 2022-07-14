@@ -257,16 +257,21 @@ int main(int argc, char* argv[]){
       state = STATE_BATTLE_CMD;
     }
 
-    ////////// player is entering commands, wait for the exit, then record the ACTION //////////
+    ////////// player is entering commands, record STATE and ACTION on every button press //////////
     if (state == STATE_BATTLE_CMD){
       passthru(display, &teleop_command);
+      
+      // if a button was pressed then save both ACTION and STATE to logs
+      // TODO
+      if (0){
+        get_battle_action_queue(pid, wram_ptr, actions_raw);
+        export_action_state(actions_raw, action_space.actions); 
+        logfile_write_action(logfile, &action_space);
+      }
 
       // upon leaving this state, save the input action dataset
       if (get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU) == 0){
         printf("  end listening for player input in battle\n");
-        get_battle_action_queue(pid, wram_ptr, actions_raw);
-        export_action_state(actions_raw, action_space.actions); 
-        logfile_write_action(logfile, &action_space);
         state = STATE_BATTLE_WATCH;
       }
     }

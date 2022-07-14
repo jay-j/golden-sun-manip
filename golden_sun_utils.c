@@ -204,9 +204,15 @@ uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr){
 }
 
 // TODO negative number indicates this is not in WRAM but is somewhere else
-#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID (-0x3AAB78)
+// 0x7a3683c
+// 0x7a3685c
+// 0x7a9cf84. Data in one byte. Gives 255 on the "fight, run, status menu".
+// gives 0=Isaac, 1=Garret, 2=Ivan, 3=Mia when an action is being selected for their character in battle
+// They seem to give gibberish results in between turns
+// This is character locked (keeps character even if party order is altered). And keeps them even if the character gets a duplicate turn.
+#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID (0x35A24)
 uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr){
-  printf("wram = %p .... battle menu character id at %p\n", wram_ptr, wram_ptr+MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
+  // printf("wram = %p .... battle menu character id at %p\n", wram_ptr, wram_ptr+MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
   uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
   return result;
 }

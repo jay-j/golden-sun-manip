@@ -112,8 +112,8 @@ int main(int argc, char* argv[]){
   //golden_sun_print_unknowns(allies);
 
   uint8_t cmd = get_battle_menu_character_init(pid, wram_ptr);
-  // uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
-  printf("Character __ menu state? %u\n", cmd);
+  uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
+  printf("Character %u menu state? %u\n", char_id, cmd);
 
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);
