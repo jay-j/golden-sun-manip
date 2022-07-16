@@ -25,7 +25,7 @@ int main(){
     struct frame_buffer fb;
     
     // open the file for reading
-    fb.fd = open("/dev/fb0", O_RDONLY);
+    fb.fd = open("/dev/fb0", O_RDWR);
     if (fb.fd == -1){
         printf("[ERROR] Cannot open framebuffer device.\n");
         exit(1);
@@ -33,6 +33,15 @@ int main(){
     printf("Framebuffer device opened successfully.\n");
     
     // Get variable screen information
+    ioctl(fb.fd, FBIOGET_VSCREENINFO, &fb.var_info);
+    fb.var_info.activate |= FB_ACTIVATE_NOW | FB_ACTIVATE_FORCE;
+    if (0 > ioctl(fb.fd, FBIOPUT_VSCREENINFO, &fb.var_info)){
+        printf("Failed to refresh\n");
+        return -1;
+    }
+    else{
+        printf("activated successfully\n");
+    }
     ioctl(fb.fd, FBIOGET_VSCREENINFO, &fb.var_info);
     
     // get fixed screen information
