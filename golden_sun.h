@@ -140,9 +140,47 @@ typedef struct __attribute__((__packed__)) Djinn_Queue_Item {
 #define DJINN_QUEUE_MAX_LENGTH 64
 typedef Djinn_Queue_Item Djinn_Queue[DJINN_QUEUE_MAX_LENGTH]; // TODO not enough for the full TLA party?
 
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Battle Menu - These are "UI" elements, for navigating the battle menu without graphics
+
 // if zero, NOT listening for player input in battle
 #define MEMORY_OFFSET_BATTLE_MENU 0x31054
 
+// Data in one byte. Gives 255 on the "fight, run, status menu".
+// gives 0=Isaac, 1=Garret, 2=Ivan, 3=Mia when an action is being selected for their character in battle
+// They seem to give gibberish results in between turns
+// This is character locked (keeps character even if party order is altered). And keeps them even if the character gets a duplicate turn.
+#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID 0x35A24
+
+// are we at an individual character battle menu? e.g. reset action state?
+// 00 if active
+// f0 if in pre-menu (or other menus - caution)
+// f1 if in watching the battle view mode?
+#define MEMORY_OFFSET_BATTLE_MENU_L0 0x347E1
+
+// Single byte integer in battle. L1; fight/run, attack/psy/summon, etc.
+#define MEMORY_OFFSET_BATTLE_MENU_L1 0x35C0C
+
+// Single byte integers in battle. L2; which psyenergy, which summon, vertical menu position (not page). Does not work for djinn.
+// use with MINOR+MAJOR; MINOR jumps by one, MAJOR jumps by 5 in psyenergy, 4 in summons, etc.
+#define MEMORY_OFFSET_BATTLE_MENU_L2_MINOR 0x35974
+#define MEMORY_OFFSET_BATTLE_MENU_L2_MAJOR 0x35978
+
+// Single byte integers in battle menu, representing the djinn the player is in the process of selecting. 
+// Use with MINOR+MAJOR
+// TODO note these are IRAM not WRAM offsets
+#define MEMORY_OFFSET_BATTLE_MENU_DJINN_MINOR 0x7CEC
+#define MEMORY_OFFSET_BATTLE_MENU_DJINN_MAJOR 0x7C98
+
+// Main target of the proposed action. Does not distinguish between allies and enemies; Will be 0-3...
+// TODO note these are IRAM not WRAM offsets
+#define MEMORY_OFFSET_BATTLE_MENU_TARGET 0x7C8C
+
+//////////////////////////////////////////////////////////////////////////////////////
+// These variables store the final actions (after selection is complete).
+// Once the player turn is complete, enemy actions are added to the list. 
+// Then the list is sorted by agility and actions are taken.
 #define MEMORY_OFFSET_BATTLE_ACTION_QUEUE 0x30338
 #define BATTLE_ACTION_QUEUE_MAX_LENGTH (ALLIES+ENEMIES_MAX)
 typedef struct __attribute__((__packed__)) Battle_Action {

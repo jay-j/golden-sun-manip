@@ -22,7 +22,12 @@ uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr);
 uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, int64_t offset);
 
 char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t needle_n);
-uint8_t* find_wram(pid_t pid);
+
+// These are some magic values.. for me the location of wram can be found at a static offset,
+// within the memory chunk on the line above the heap in /proc/[pid]/maps for the emulator process.
+#define MEMORY_TYPE_WRAM_BOARD 0x2D3A08 
+#define MEMORY_TYPE_WRAM_CHIP 0x2D3A10 
+uint8_t* find_wram(pid_t pid, uint64_t type);
 pid_t find_pid();
 
 typedef struct __attribute__((__packed__)) ExportAlly{
@@ -181,12 +186,22 @@ typedef struct __attribute__((__packed__)) ExportAction {
   uint8_t target;
 } ExportAction;
 
+
+typedef struct __attribute__((__packed__)) Battle_Menu_Navigation {
+  uint8_t menu_active; // nonzero = looking for player input
+  uint8_t character;   // independent of order; 0=Isaac always
+  uint8_t menu_l0;
+  uint8_t menu_l1;
+  uint8_t menu_l2;
+  uint8_t menu_l2_djinn;
+  uint8_t target;
+} Battle_Menu_Navigation;
+
 // the memory blobs to save as ML observation and action space
 typedef struct __attribute__((__packed__)) ML_Observation_Space {
   ExportAlly allies[ALLIES];
   ExportEnemy enemies[ENEMIES_MAX];
   Export_Djinn_List djinn;
-  // TODO screencap
   // TODO some battle menu state observations
 } ML_Observation_Space;
 
@@ -215,5 +230,7 @@ uint32_t health_total(Unit* units, size_t n);
 void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* actions);
 
 void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export);
+
+void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_chip, Battle_Menu_Navigation* info);
 
 #endif // header guards

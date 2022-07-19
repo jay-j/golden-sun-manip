@@ -1,4 +1,5 @@
 #include "golden_sun_utils.h"
+#include "golden_sun.h"
 
 uint8_t get_byte(pid_t pid, uint8_t* wram_ptr, int64_t offset){
   uint8_t result = 0;
@@ -177,6 +178,8 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
 }
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint8_t get_battle_menu(Battle_Action* actions){
   uint8_t result = 0x01;
   for (size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
@@ -193,24 +196,11 @@ uint8_t get_battle_menu(Battle_Action* actions){
   return result;
 }
 
-#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_INIT 0x347E1
-// are we at an individual character battle menu? e.g. reset action state?
-// 00 if active
-// f0 if in pre-menu (or other menus - caution)
-// f1 if in watching the battle view mode?
 uint8_t get_battle_menu_character_init(pid_t pid, uint8_t* wram_ptr){
-  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_INIT);
+  uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_L0);
   return result;
 }
 
-// TODO negative number indicates this is not in WRAM but is somewhere else
-// 0x7a3683c
-// 0x7a3685c
-// 0x7a9cf84. Data in one byte. Gives 255 on the "fight, run, status menu".
-// gives 0=Isaac, 1=Garret, 2=Ivan, 3=Mia when an action is being selected for their character in battle
-// They seem to give gibberish results in between turns
-// This is character locked (keeps character even if party order is altered). And keeps them even if the character gets a duplicate turn.
-#define MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID (0x35A24)
 uint8_t get_battle_menu_character_id(pid_t pid, uint8_t* wram_ptr){
   // printf("wram = %p .... battle menu character id at %p\n", wram_ptr, wram_ptr+MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
   uint8_t result = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
@@ -269,7 +259,7 @@ char* strstr_n(char* haystack_start, size_t haystack_n, char* needle, size_t nee
 }
 
 // 0x01983a08 this static memory address lists the moving address for wram start
-uint8_t* find_wram(pid_t pid){
+uint8_t* find_wram(pid_t pid, uint64_t type){
 
   // read line in /proc/$pid/maps to figure out where the [heap] is
   char filename_map[64];
@@ -303,7 +293,7 @@ uint8_t* find_wram(pid_t pid){
   local[0].iov_base = mem_adr_ptr;
   local[0].iov_len = 4;
   struct iovec remote[1];
-  remote[0].iov_base = (uint8_t*) 0x2D3A08 + mem_ref; // TODO magic value
+  remote[0].iov_base = (uint8_t*) type + mem_ref; // TODO magic value
   remote[0].iov_len = 4;
   ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
   assert(n_read == 4);
@@ -312,7 +302,6 @@ uint8_t* find_wram(pid_t pid){
 
   uint8_t* game_ptr = (uint8_t*) mem_adr;
   printf("WRAM located at %p\n", game_ptr);
-  //print_djinn_aid(game_ptr);
 
   return game_ptr;
 }
@@ -420,7 +409,7 @@ void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* action
   assert(n_read == remote[0].iov_len);
 }
 
-
+/*
 // convert gba-format action struct to minimal representation for ML in copy operation
 void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export){
   for (size_t a=0; a<ALLIES; ++a){
@@ -431,3 +420,18 @@ void export_action_state(Battle_Action* actions_raw, ExportAction* actions_expor
     actions_export[a].target = actions_raw[a].target;
   }
 } 
+*/
+
+
+void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_chip, Battle_Menu_Navigation* info){
+  info->menu_active = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU);
+  info->character = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_CHARACTER_ID);
+  info->menu_l0 = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_L0);
+  info->menu_l1 = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_L1);
+  info->menu_l2 = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_L2_MINOR) + 
+                  get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU_L2_MAJOR);
+  info->menu_l2_djinn = get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_DJINN_MINOR) +
+                        get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_DJINN_MAJOR);
+  info->target = get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_TARGET);
+
+}

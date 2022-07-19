@@ -64,7 +64,7 @@ int main(int argc, char* argv[]){
   pid_t pid = find_pid();
 
   // start of wram is the origin
-  uint8_t* wram_ptr = find_wram(pid);
+  uint8_t* wram_ptr = find_wram(pid, MEMORY_TYPE_WRAM_BOARD);
 
   Unit allies[4]; 
   get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies, 4);
@@ -110,10 +110,11 @@ int main(int argc, char* argv[]){
 
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
-
-  uint8_t cmd = get_battle_menu_character_init(pid, wram_ptr);
-  uint8_t char_id = get_battle_menu_character_id(pid, wram_ptr);
-  printf("Character %u menu state? %u\n", char_id, cmd);
+  uint8_t* wram_ptr_chip = find_wram(pid, MEMORY_TYPE_WRAM_CHIP);
+  Battle_Menu_Navigation info;
+  get_battle_menu_navigation(pid, wram_ptr, wram_ptr_chip, &info);
+  printf("Battle menu state? %u   Character: %u\n", info.menu_active, info.character);
+  printf("L0: %u   L1: %u   L2: %u   L2_djinn: %u   Target: %u\n", info.menu_l0, info.menu_l1, info.menu_l2, info.menu_l2_djinn, info.target);
 
   Export_Djinn ed;
   get_djinn(pid, wram_ptr, allies, ed);

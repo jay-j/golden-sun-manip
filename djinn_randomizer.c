@@ -142,7 +142,7 @@ int main(int argc, char* argv[]){
 
   // find game memory
   pid_t pid = find_pid();
-  uint8_t* wram_ptr = find_wram(pid);
+  uint8_t* wram_ptr = find_wram(pid, MEMORY_TYPE_WRAM_BOARD);
   
   // write random values to game memory
   for (size_t i=0; i<ALLIES*ELEMENTS; ++i){

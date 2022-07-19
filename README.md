@@ -19,6 +19,10 @@ Many (all?) significant values are stored at static memory addresses within `WRA
 - Battle UI requesting human input. A single byte at `+0x31054`.
 - Battle menu character init single byte at `+0x2094`. 65 if ready, 0 if not (selecting djinn or psyenergy or something). 65 at attack/flee screen as well. Moves to 4 in the middle of battle in some places.. so this probably isn't it? 
 
+Some battle menu navigation values are stored at static memory addresses within `IRAM`. 
+- Djinn menu navigation. Add two bytes together.
+- Target selection. Counts up from 0 regardless if selecting enemy or ally.
+
 # TODO
 - Constant background monitoring
   - service: provide game state on request
@@ -38,6 +42,8 @@ Many (all?) significant values are stored at static memory addresses within `WRA
 ## Enemy
 - Everything
 - REMOVE: unknowns except battle status, items, djinn, experience, name
+## Battle Menu Navigation
+- A bunch of uint8's...
 
 
 # Implementation

@@ -156,7 +156,7 @@ int main(int argc, char* argv[]){
 
   // find the game process, find where in heap the start of wram is 
   pid_t pid = find_pid();
-  uint8_t* wram_ptr = find_wram(pid);
+  uint8_t* wram_ptr = find_wram(pid, MEMORY_TYPE_WRAM_BOARD);
 
   // clock the state machine
   struct LoopTimeManagement tm;
@@ -265,7 +265,7 @@ int main(int argc, char* argv[]){
       // TODO
       if (0){
         get_battle_action_queue(pid, wram_ptr, actions_raw);
-        export_action_state(actions_raw, action_space.actions); 
+        // export_action_state(actions_raw, action_space.actions); 
         logfile_write_action(logfile, &action_space);
       }
 

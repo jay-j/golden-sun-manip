@@ -26,11 +26,7 @@ If I use the last one, then everything else does seem to fall into place...
 
 
 # TODO
-- determine memory address auto finding. Is the variability within golden sun, or within mednafen? 
-- demo utility: put up on a GUI live updating character stats, allows you to choose character at will. Nuklear gui? 
-- find where the djinn recovery info is stored
-- reverse engineer the monster structure
-- find out where monster quantities are listed
+- demo utility: put up on a GUI live updating character stats, allows you to choose character at will. 
 - find out where active psyenergy option selection list is?
 
 
@@ -301,7 +297,7 @@ Idea: reward after every turn: `sum(ally_health) - sum(enemy_health) - 2000[qty 
 
 ## Diagnostic Info
 - store factors that go into reward. so the weighting can be adjusted later
-- 
+
 # Take 2
 Use tinygrad to try and reduce the code bloat overhead.
 As input:
@@ -309,3 +305,35 @@ As input:
 - full screengrab; reduce data required using SVD?
 as output; the action space:
 - which button to push: d-pad (4), a button (1). B button? Idea is that training might be more feasible actually by reducing the action space.
+
+# Getting the Last of the Battle Menu stuff
+
+Need to orient inside 0x03....
+
+Find where the djinn thing is inside RAM. 
+
+Knowing the size of the 0x3wram, get a snapshot that's a bunch of memory before and after that? 
+Compare where it is to the bounds of memory map. 
+
+
+2022-07-18 2038
+- PID is 9481
+- WRAM is 0x6ca7ba0   0x6 ca 7b a0   
+- Array of 4 bytes. But memory in my computer is 8 bytes (64 bit)
+
+Some lines from the `$ cat /proc/9481/maps`
+016b0000-05b66000 rw-p 00000000 00:00 0 
+06a10000-07435000 rw-p 00000000 00:00 0                                  [heap]
+
+WRAM is found by looking at a magic address inside that 0x016b0000 block, which contains a pointer to WRAM.
+
+Looking 8 bytes before and after the adddress of WRAM gives addresses nearby where I'm interested in.
+
+This looks promising: 0x01983a10 (the pointer after wram) points to 0x06c6f450 which is 0x38750 before WRAM. This is big enough to store all the stuff I've seen for the battle menu.
+
+Here, looking for the minor count of djinn gives memory address 0x6c7713c. That is chip_wram + 0x7cec.
+And the major count of djinn gives memory address 0x6c770e8. That is chip_wram + 0x7C98.
+
+Finally, the target selection is at 0x6c770dc. That is chip_wram + 0x7C8C.
+
+Success.
