@@ -180,6 +180,7 @@ void get_unit_data(pid_t pid, void* start_ptr, Unit* units, size_t unit_n){
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
+// TODO what..
 uint8_t get_battle_menu(Battle_Action* actions){
   uint8_t result = 0x01;
   for (size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){

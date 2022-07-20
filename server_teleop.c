@@ -54,6 +54,7 @@ typedef struct {
   int8_t button_left;  // shoulder left
   int8_t button_right; // shoulder right
   int8_t battle_init; 
+  int8_t anything;    // are any buttons newly pushed?
 } Teleop_Command;
 
 void joystick(void* socket, Teleop_Command* teleop_command){
@@ -109,12 +110,21 @@ void passthru(Display* display, Teleop_Command* teleop_command){
 }
 
 
+void copy_action_state(ML_Action_Space* action, Teleop_Command* teleop){
+  action->dpad_up    = teleop->dpad_up;
+  action->dpad_down  = teleop->dpad_down;
+  action->dpad_left  = teleop->dpad_left;
+  action->dpad_right = teleop->dpad_right;
+  action->button_a   = teleop->button_a;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////
 
-FILE* logfile_init(){
+FILE* logfile_init(char* name){
   FILE* fd;
   printf("[LOG] FILE INIT\n");
-  fd = fopen("test.txt", "w");
+  // TODO make name merge with suffix and add date and stuff
+  fd = fopen(name, "w");
   fprintf(fd, "HEADER HERE\n");
   return fd;
 }
@@ -133,7 +143,6 @@ void logfile_write_action(FILE* fd, ML_Action_Space* act){
   printf("[LOG] WRITE ACTION\n");
   fprintf(fd, "action here\n");
   write_binary(fd, (uint8_t*) act, sizeof(ML_Action_Space));
-  // TODO binary blob, just send the raw ML_Action_State struct
 }
 
 
@@ -141,7 +150,6 @@ void logfile_write_state(FILE* fd, ML_Observation_Space* obs){
   printf("[LOG] WRITE STATE\n");
   fprintf(fd, "state here\n");
   write_binary(fd, (uint8_t*) obs, sizeof(ML_Observation_Space));
-  // TODO binary blob, just send the raw ML_Observation_State struct
 }
 
 
@@ -157,6 +165,7 @@ int main(int argc, char* argv[]){
   // find the game process, find where in heap the start of wram is 
   pid_t pid = find_pid();
   uint8_t* wram_ptr = find_wram(pid, MEMORY_TYPE_WRAM_BOARD);
+  uint8_t* iram_ptr = find_wram(pid, MEMORY_TYPE_WRAM_CHIP);
 
   // clock the state machine
   struct LoopTimeManagement tm;
@@ -181,14 +190,13 @@ int main(int argc, char* argv[]){
   // make the golden sun data structures
   Unit allies_raw[ALLIES];
   Unit enemies_raw[ENEMIES_MAX];
-  Battle_Action actions_raw[BATTLE_ACTION_QUEUE_MAX_LENGTH];
 
   ML_Observation_Space observation_space;
-
   ML_Action_Space action_space;
 
   // log file pointer
-  FILE* logfile;
+  FILE* logfile_state;
+  FILE* logfile_action;
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
@@ -210,16 +218,16 @@ int main(int argc, char* argv[]){
     // zmq comms; get joystick data
     // fills in the teleop_command struct
     joystick(server_socket, &teleop_command);
+    copy_action_state(&action_space, &teleop_command);
 
     // get data from golden sun
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, ALLIES);
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, ENEMIES_MAX);
-    get_battle_action_queue(pid, wram_ptr, actions_raw);
-    battle_menu_previous = battle_menu_current;
-    battle_menu_current = get_battle_menu(actions_raw); // TODO modify to take the action state
-    // TODO djinn data
-    // TODO battle action list
+    get_battle_menu_navigation(pid, wram_ptr, iram_ptr, &observation_space.menu_nav);
 
+    battle_menu_previous = battle_menu_current;
+    battle_menu_current = observation_space.menu_nav.menu_active;
+    
     // make nice states to send
     export_copy_allies(pid, wram_ptr, allies_raw, observation_space.allies);
     export_copy_enemies(enemies_raw, observation_space.enemies);
@@ -232,12 +240,14 @@ int main(int argc, char* argv[]){
 
       // listen to initialize battle mode
       if (teleop_command.battle_init == 1){
-        logfile = logfile_init();
+        logfile_state = logfile_init("state");
+        logfile_action = logfile_init("action");
         state = STATE_BATTLE_INIT;
       }
     } 
 
-    ////////// just before commands start - record the STATE //////////
+    ////////// just before commands start //////////
+    // currently just showing some debug info to the player.. TODO remove this state entirely?
     if (state == STATE_BATTLE_INIT){
       /*
       for (size_t i=0; i<ALLIES; i++){
@@ -250,10 +260,6 @@ int main(int argc, char* argv[]){
       }
       printf("\n");
 
-      // TODO write state
-      logfile_write_state(logfile, &observation_space);
-
-      // get the initial state; the enemy input data
       state = STATE_BATTLE_CMD;
     }
 
@@ -261,16 +267,14 @@ int main(int argc, char* argv[]){
     if (state == STATE_BATTLE_CMD){
       passthru(display, &teleop_command);
       
-      // if a button was pressed then save both ACTION and STATE to logs
-      // TODO
-      if (0){
-        get_battle_action_queue(pid, wram_ptr, actions_raw);
-        // export_action_state(actions_raw, action_space.actions); 
-        logfile_write_action(logfile, &action_space);
+      // if any button was pressed then save both ACTION and STATE to logs
+      if (teleop_command.anything){
+        logfile_write_state(logfile_state, &observation_space);
+        logfile_write_action(logfile_action, &action_space);
       }
 
       // upon leaving this state, save the input action dataset
-      if (get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU) == 0){
+      if (observation_space.menu_nav.menu_active == 0){
         printf("  end listening for player input in battle\n");
         state = STATE_BATTLE_WATCH;
       }
@@ -287,7 +291,7 @@ int main(int argc, char* argv[]){
         state = STATE_BATTLE_INIT;
       }
 
-      // if all enemies are dead... go back to passthrough mode
+      // if all enemies are dead... run battle end logic
       if (health_total(enemies_raw, ENEMIES_MAX) == 0){
         state = STATE_BATTLE_END;
       }
@@ -296,10 +300,11 @@ int main(int argc, char* argv[]){
     ////////// battle is over, record state one more time, close up the log file //////////
     if (state == STATE_BATTLE_END){
       printf("STATE: BATTLE ENDED!\n");
-      // TODO log state
-      // TODO close log file
-      logfile_write_state(logfile, &observation_space);
-      logfile_close(logfile);
+
+      logfile_write_state(logfile_state, &observation_space);
+      logfile_write_action(logfile_action, &action_space);
+      logfile_close(logfile_state);
+      logfile_close(logfile_action);
 
       state = STATE_PASSTHRU;
     }

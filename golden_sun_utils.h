@@ -202,7 +202,7 @@ typedef struct __attribute__((__packed__)) ML_Observation_Space {
   ExportAlly allies[ALLIES];
   ExportEnemy enemies[ENEMIES_MAX];
   Export_Djinn_List djinn;
-  // TODO some battle menu state observations
+  Battle_Menu_Navigation menu_nav;
 } ML_Observation_Space;
 
 typedef struct __attribute__((__packed__)) ML_Action_Space {

@@ -24,20 +24,22 @@ print("connection opened")
 def encode_button(buttons, value, index):
     buttons += (value << index)
     return buttons
-buttonlist = {pygame.K_w:0, pygame.K_s:1, pygame.K_a:2, pygame.K_d:3, pygame.K_k:4, pygame.K_j:5, pygame.K_n:6, pygame.K_m:7, pygame.K_q:8, pygame.K_e:9, pygame.K_t:10}
+buttonlist = {pygame.K_w:0, pygame.K_s:1, pygame.K_a:2, pygame.K_d:3, pygame.K_k:4, pygame.K_j:5, pygame.K_n:6, pygame.K_m:7, pygame.K_q:8, pygame.K_e:9, pygame.K_t:10, "anything":11}
 
 run = True
 while run:
 
-    message = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    message = bytearray([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
 
     events = pygame.event.get()
+    anything_pushed = False
 
     for event in events:
         if event.type == pygame.QUIT:
             run = False 
 
         if event.type == pygame.KEYDOWN:
+            anything_pushed = True
             # lookup dictionary, mark bits
             if event.key in buttonlist.keys():
                 message[buttonlist[event.key]] = 1
@@ -45,6 +47,8 @@ while run:
             if event.key in buttonlist.keys():
                 message[buttonlist[event.key]] = 2
 
+    if anything_pushed:
+        message[buttonlist["anything"]] = 1
     #print(f"Trying to send message: {message}")
     socket.send(message)
 
