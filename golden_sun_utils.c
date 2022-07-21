@@ -440,3 +440,27 @@ void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_
   info->target = get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_TARGET);
 
 }
+
+const char* djinn_get_name(Export_Djinn_Item djinn){
+
+  // index with (num_per_element)*element + num_within_element
+  const char* djinn_names[] = {"Flint", "Granite", "Quartz", "Vine", "Sap", "Ground", "Bane", 
+                               "Fizz", "Sleet", "Mist", "Spritz", "Hail", "Tonic", "Dew", 
+                               "Forge", "Fever", "Corona", "Scorch", "Ember", "Flash", "Torch",
+                               "Gust", "Breeze", "Zephyr", "Smog", "Kite", "Squall", "Luff"}; 
+  uint32_t id = djinn.id;
+  uint32_t djinn_per_element = 7;
+  
+  // convert binary id into sequential index
+  uint32_t index = 0;
+  while (id > 1){
+    id = id >> 1;
+    index += 1;
+  }
+  
+  // adjust index for the elements
+  index += djinn_per_element * djinn.element;
+  
+  // lookup and return the string
+  return djinn_names[index]; 
+}

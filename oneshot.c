@@ -121,18 +121,27 @@ int main(int argc, char* argv[]){
 
   Export_Djinn_List ed[ALLIES];
   get_djinn(pid, wram_ptr, allies, ed);
+  
+  printf("\nDJINN STATUSES:\n");
+  for (size_t a=0; a<ALLIES; ++a){
+    printf("Character: %lu (%u djinn)\n", a, ed[a].quantity);
+    for (size_t d=0; d<ed[a].quantity; ++d){
+      printf("  %s: %u\n", djinn_get_name(ed[a].djinn[d]), ed[a].djinn[d].status);
+    
+    }
+  }
+
 
   Battle_Action actions[BATTLE_ACTION_QUEUE_MAX_LENGTH];
   get_battle_action_queue(pid, wram_ptr, actions);
 
+  /*
   for(size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
     printf("Character: %u \tAction: 0x%02x %02x \tTarget: 0x%02x (falloff %02x)\tDjinn Element: %u  \t ", 
        actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].falloff, actions[i].element);
     print_battle_action_unknowns(actions+i);
   }
-
-  uint8_t ready = get_battle_menu(actions);
-  printf("Battle menu? %u\n", ready);
+  */
 
   return 0;
 }

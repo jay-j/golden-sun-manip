@@ -233,4 +233,6 @@ void export_action_state(Battle_Action* actions_raw, ExportAction* actions_expor
 
 void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_chip, Battle_Menu_Navigation* info);
 
+const char* djinn_get_name(Export_Djinn_Item djinn);
+
 #endif // header guards
