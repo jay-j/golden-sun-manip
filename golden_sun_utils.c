@@ -126,7 +126,9 @@ void golden_sun_print_unknowns(Unit* unit){
 uint32_t health_total(Unit* units, size_t n){
   uint32_t health = 0;
   for (size_t i=0; i<n; ++i){
-    health += units[i].health_current;
+    if (units[i].battle_status > 0){
+      health += units[i].health_current;
+    }
   }
   return health;
 }
@@ -309,7 +311,7 @@ uint8_t* find_wram(pid_t pid, uint64_t type){
 
 
 // deconfuse djinn from wram, write it in a memory blob to send
-void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn){
+void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn_List* export_djinn){
 
   // look at characters to figure out how many djinn they have
   for (size_t i=0; i<ALLIES; ++i){
@@ -385,6 +387,7 @@ void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_d
   }
 
   // debug only - print the results!
+  /*
   for(size_t i=0; i<ALLIES; ++i){
     Unit* ally = allies+i;
     Export_Djinn_List* list = export_djinn+i;
@@ -393,6 +396,7 @@ void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_d
       printf("  djinn:%u   element:%u   status:%u\n", list->djinn[d].id, list->djinn[d].element, list->djinn[d].status);
     }
   }
+  */
 
 }
 

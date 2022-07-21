@@ -93,6 +93,7 @@ int main(int argc, char* argv[]){
     printf("\n");
   }
   printf("\n");
+  printf("enemy health sum: %u\n", health_total(enemies, 5));
 
   // figure out which element is weakest
   for (int e=0; e<ELEMENTS; ++e){
@@ -101,12 +102,14 @@ int main(int argc, char* argv[]){
     }
   }
 
-  printf("                    venus   mrcry    mars   jupiter\n");
-  printf("Health*Resistances: ");
-  for (int e=0; e<ELEMENTS; ++e){
-    printf("%5u   ", 100*weakness[e]/weakness_min);
+  if (health_total(enemies, 5) > 0){
+    printf("                    venus   mrcry    mars   jupiter\n");
+    printf("Health*Resistances: ");
+    for (int e=0; e<ELEMENTS; ++e){
+      printf("%5u   ", 100*weakness[e]/weakness_min);
+    }
+    printf("   (normalized)\n\n");
   }
-  printf("   (normalized)\n\n");
 
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
@@ -116,7 +119,7 @@ int main(int argc, char* argv[]){
   printf("Battle menu state? %u   Character: %u\n", info.menu_active, info.character);
   printf("L0: %u   L1: %u   L2: %u   L2_djinn: %u   Target: %u\n", info.menu_l0, info.menu_l1, info.menu_l2, info.menu_l2_djinn, info.target);
 
-  Export_Djinn ed;
+  Export_Djinn_List ed[ALLIES];
   get_djinn(pid, wram_ptr, allies, ed);
 
   Battle_Action actions[BATTLE_ACTION_QUEUE_MAX_LENGTH];

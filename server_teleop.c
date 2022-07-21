@@ -41,7 +41,7 @@ void key_release(Display* display, int keycode_sym){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-#define TELEOP_COMMAND_MSG_SIZE 11
+#define TELEOP_COMMAND_MSG_SIZE 12
 typedef struct {
   int8_t dpad_up;    // w; up 
   int8_t dpad_down;  // s; down
@@ -69,7 +69,7 @@ void joystick(void* socket, Teleop_Command* teleop_command){
       ++ptr;
     }
 
-    /*
+    
     if (change > 0){
       printf("received teleop command: ");
       uint8_t* ptr = (uint8_t*) teleop_command;
@@ -79,7 +79,7 @@ void joystick(void* socket, Teleop_Command* teleop_command){
       }
       printf("\n");
     }
-    */
+    
     
   }
   else{
@@ -212,6 +212,7 @@ int main(int argc, char* argv[]){
   int state = STATE_PASSTHRU;
   int battle_menu_previous = 0;
   int battle_menu_current = 0;
+  long last_a_press = get_time_ms();
   for (;;){
     loop_frequency_delay(&tm);
 
@@ -223,15 +224,16 @@ int main(int argc, char* argv[]){
     // get data from golden sun
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ALLIES, allies_raw, ALLIES);
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, ENEMIES_MAX);
-    get_battle_menu_navigation(pid, wram_ptr, iram_ptr, &observation_space.menu_nav);
+    get_battle_menu_navigation(pid, wram_ptr, iram_ptr, &(observation_space.menu_nav));
 
     battle_menu_previous = battle_menu_current;
+    // battle_menu_current = observation_space.menu_nav.menu_active & (observation_space.menu_nav.menu_l0 != 241);
     battle_menu_current = observation_space.menu_nav.menu_active;
     
     // make nice states to send
     export_copy_allies(pid, wram_ptr, allies_raw, observation_space.allies);
     export_copy_enemies(enemies_raw, observation_space.enemies);
-    get_djinn(pid, wram_ptr, allies_raw, &observation_space.djinn);
+    get_djinn(pid, wram_ptr, allies_raw, observation_space.djinn);
 
     ////////// for normal gameplay //////////
     if (state == STATE_PASSTHRU){
@@ -240,8 +242,9 @@ int main(int argc, char* argv[]){
 
       // listen to initialize battle mode
       if (teleop_command.battle_init == 1){
-        logfile_state = logfile_init("state");
-        logfile_action = logfile_init("action");
+        printf("[STATE] Battle Init!\n");
+        logfile_state = logfile_init("state.log");
+        logfile_action = logfile_init("action.log");
         state = STATE_BATTLE_INIT;
       }
     } 
@@ -249,18 +252,27 @@ int main(int argc, char* argv[]){
     ////////// just before commands start //////////
     // currently just showing some debug info to the player.. TODO remove this state entirely?
     if (state == STATE_BATTLE_INIT){
-      /*
-      for (size_t i=0; i<ALLIES; i++){
-        print_data_ally(allies_send+i);
-      }
-      */
- 
-      for(int i=0; i<ENEMIES_MAX; i++){
-        printf("%u  ", enemies_raw[i].health_current);
-      }
-      printf("\n");
+      printf("menu_l0=%u\n", observation_space.menu_nav.menu_l0);
 
-      state = STATE_BATTLE_CMD;
+      // need to clear some status scrolling text
+      if (observation_space.menu_nav.menu_l0 == 241){
+        printf("pugh B\n");
+        key_tap(display, XK_j);
+      }
+
+      // need to advance to commanding the first character
+      if (observation_space.menu_nav.menu_l0 == 240){
+        if (get_time_ms() - last_a_press > 100){
+          printf("push A\n");
+          key_tap(display, XK_k);
+          last_a_press = get_time_ms();
+        }
+      }
+ 
+      if (observation_space.menu_nav.menu_l0 == 0){
+        printf("[STATE] leaving init to go to command mode.\n");
+        state = STATE_BATTLE_CMD;
+      }
     }
 
     ////////// player is entering commands, record STATE and ACTION on every button press //////////
@@ -274,7 +286,9 @@ int main(int argc, char* argv[]){
       }
 
       // upon leaving this state, save the input action dataset
-      if (observation_space.menu_nav.menu_active == 0){
+      // printf("Battle Menu State: %u\n", battle_menu_current);
+      if (battle_menu_current == 0){
+      // if (observation_space.menu_nav.menu_active == 0){
         printf("  end listening for player input in battle\n");
         state = STATE_BATTLE_WATCH;
       }
@@ -286,13 +300,13 @@ int main(int argc, char* argv[]){
       key_tap(display, XK_j);
  
       // upon leaving this state, save the battle ally+enemy dataset
-      if ((battle_menu_current == 1) && (battle_menu_previous == 0)){
+      if (battle_menu_current == 1){
         printf("  end passive watching of the battle.\n");
         state = STATE_BATTLE_INIT;
       }
 
       // if all enemies are dead... run battle end logic
-      if (health_total(enemies_raw, ENEMIES_MAX) == 0){
+      if ((health_total(enemies_raw, ENEMIES_MAX) == 0) && (observation_space.menu_nav.menu_l0 == 0)){
         state = STATE_BATTLE_END;
       }
     }
