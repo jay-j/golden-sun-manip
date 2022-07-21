@@ -301,7 +301,7 @@ uint8_t* find_wram(pid_t pid, uint64_t type){
   ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
   assert(n_read == 4);
 
-  printf("wram prediction: 0x%lx\n   ", mem_adr); 
+  // printf("wram prediction: 0x%lx\n   ", mem_adr); 
 
   uint8_t* game_ptr = (uint8_t*) mem_adr;
   printf("WRAM located at %p\n", game_ptr);

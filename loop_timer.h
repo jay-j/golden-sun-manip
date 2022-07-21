@@ -7,6 +7,7 @@
 
 long get_time_us();
 long get_time_ms();
+long get_time_sec();
 
 struct LoopTimeManagement{
 	long program_start_time;

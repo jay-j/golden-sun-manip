@@ -120,10 +120,12 @@ void copy_action_state(ML_Action_Space* action, Teleop_Command* teleop){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-FILE* logfile_init(char* name){
+FILE* logfile_init(char* name, long time){
   FILE* fd;
-  printf("[LOG] FILE INIT\n");
+  printf("[LOG] FILE INIT at %ld\n", time);
   // TODO make name merge with suffix and add date and stuff
+  char* filename;
+  snprintf("%ld-%s.log", time, name);
   fd = fopen(name, "w");
   fprintf(fd, "HEADER HERE\n");
   return fd;
@@ -243,8 +245,9 @@ int main(int argc, char* argv[]){
       // listen to initialize battle mode
       if (teleop_command.battle_init == 1){
         printf("[STATE] Battle Init!\n");
-        logfile_state = logfile_init("state.log");
-        logfile_action = logfile_init("action.log");
+        long time = get_time_sec();
+        logfile_state = logfile_init("state", time);
+        logfile_action = logfile_init("action", time);
         state = STATE_BATTLE_INIT;
       }
     } 
