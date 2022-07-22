@@ -124,10 +124,9 @@ FILE* logfile_init(char* name, long time){
   FILE* fd;
   printf("[LOG] FILE INIT at %ld\n", time);
   // TODO make name merge with suffix and add date and stuff
-  char* filename;
-  snprintf("%ld-%s.log", time, name);
-  fd = fopen(name, "w");
-  fprintf(fd, "HEADER HERE\n");
+  char filename[64];
+  snprintf(filename, 64, "%ld-%s.log", time, name);
+  fd = fopen(filename, "w");
   return fd;
 }
 
@@ -143,21 +142,18 @@ void write_binary(FILE* fd, uint8_t* data, size_t length){
 
 void logfile_write_action(FILE* fd, ML_Action_Space* act){
   printf("[LOG] WRITE ACTION\n");
-  fprintf(fd, "action here\n");
   write_binary(fd, (uint8_t*) act, sizeof(ML_Action_Space));
 }
 
 
 void logfile_write_state(FILE* fd, ML_Observation_Space* obs){
   printf("[LOG] WRITE STATE\n");
-  fprintf(fd, "state here\n");
   write_binary(fd, (uint8_t*) obs, sizeof(ML_Observation_Space));
 }
 
 
 void logfile_close(FILE* fd){
   printf("[LOG] CLOSE\n");
-  fprintf(fd, "CLOSER HERE\n");
   fclose(fd);
 }
 
@@ -195,6 +191,9 @@ int main(int argc, char* argv[]){
 
   ML_Observation_Space observation_space;
   ML_Action_Space action_space;
+  
+  printf("The observation space is %lu bytes\n", sizeof(observation_space));
+  printf("The action space is %lu bytes\n", sizeof(action_space));
 
   // log file pointer
   FILE* logfile_state;
@@ -212,7 +211,6 @@ int main(int argc, char* argv[]){
   // automatically exit battle mode once all enemies have been detected defeated
   
   int state = STATE_PASSTHRU;
-  int battle_menu_previous = 0;
   int battle_menu_current = 0;
   long last_a_press = get_time_ms();
   for (;;){
@@ -228,7 +226,6 @@ int main(int argc, char* argv[]){
     get_unit_data(pid, wram_ptr+MEMORY_OFFSET_ENEMY, enemies_raw, ENEMIES_MAX);
     get_battle_menu_navigation(pid, wram_ptr, iram_ptr, &(observation_space.menu_nav));
 
-    battle_menu_previous = battle_menu_current;
     // battle_menu_current = observation_space.menu_nav.menu_active & (observation_space.menu_nav.menu_l0 != 241);
     battle_menu_current = observation_space.menu_nav.menu_active;
     
