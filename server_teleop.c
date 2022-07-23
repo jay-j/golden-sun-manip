@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <unistd.h>   // for setting log file ownership and group
+#include <sys/stat.h> // for setting log file permissions
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
@@ -120,41 +122,59 @@ void copy_action_state(ML_Action_Space* action, Teleop_Command* teleop){
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-FILE* logfile_init(char* name, long time){
+struct Logfile{
   FILE* fd;
+  char* name;
+};
+
+struct Logfile logfile_init(char* name, long time){
+  struct Logfile log;
   printf("[LOG] FILE INIT at %ld\n", time);
   // TODO make name merge with suffix and add date and stuff
-  char filename[64];
-  snprintf(filename, 64, "%ld-%s.log", time, name);
-  fd = fopen(filename, "w");
-  return fd;
+  log.name = (char*) malloc(64);
+  snprintf(log.name, 64, "%ld-%s.log", time, name);
+  log.fd = fopen(log.name, "w");
+  return log;
 }
 
 
-void write_binary(FILE* fd, uint8_t* data, size_t length){
+void write_binary(struct Logfile log, uint8_t* data, size_t length){
   for (size_t i=0; i<length; ++i){
-    fputc((char) *data, fd);
+    fputc((char) *data, log.fd);
     ++data;
   }
-  fprintf(fd, "\n");
+  fprintf(log.fd, "\n");
 }
 
 
-void logfile_write_action(FILE* fd, ML_Action_Space* act){
+void logfile_write_action(struct Logfile log, ML_Action_Space* act){
   printf("[LOG] WRITE ACTION\n");
-  write_binary(fd, (uint8_t*) act, sizeof(ML_Action_Space));
+  write_binary(log, (uint8_t*) act, sizeof(ML_Action_Space));
 }
 
 
-void logfile_write_state(FILE* fd, ML_Observation_Space* obs){
+void logfile_write_state(struct Logfile log, ML_Observation_Space* obs){
   printf("[LOG] WRITE STATE\n");
-  write_binary(fd, (uint8_t*) obs, sizeof(ML_Observation_Space));
+  write_binary(log, (uint8_t*) obs, sizeof(ML_Observation_Space));
 }
 
 
-void logfile_close(FILE* fd){
+void logfile_close(struct Logfile log){
   printf("[LOG] CLOSE\n");
-  fclose(fd);
+  fclose(log.fd);
+  
+  // change ownership and permissions on the created file
+  // TODO get better values?
+  int result = chown(log.name, 1000, 1000);
+  if (result == -1){
+    printf("[ERROR] chown error!i %d\n", errno);
+    assert(0);
+  }
+
+  // now change the permissions to be sure?
+  
+  // free the log filename
+  free(log.name);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -196,8 +216,8 @@ int main(int argc, char* argv[]){
   printf("The action space is %lu bytes\n", sizeof(action_space));
 
   // log file pointer
-  FILE* logfile_state;
-  FILE* logfile_action;
+  struct Logfile logfile_state;
+  struct Logfile logfile_action;
 
   printf("Two second delay starting...\n");
   usleep(2000*1e3);
