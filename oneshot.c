@@ -55,6 +55,29 @@ void print_battle_action_unknowns(Battle_Action* action){
 }
 
 
+void printf_red(){
+  printf("\033[0;31m");
+}
+
+void printf_yellow(){
+  printf("\033[0;33m");
+}
+
+void printf_purple(){
+  printf("\033[0;35m");
+}
+
+void printf_blue(){
+  printf("\033[0;34m");
+}
+
+void printf_reset(){
+  printf("\033[0m");
+}
+
+// array to help with element printing
+void (*printf_element[])() = {printf_yellow, printf_blue, printf_red, printf_purple};
+
 int main(int argc, char* argv[]){
 
   // printf("character array is size.... %ld\n", sizeof(Unit));
@@ -87,8 +110,10 @@ int main(int argc, char* argv[]){
     }
     printf("%12s \thealth: %u \tresistances: ", enemies[i].name, enemies[i].health_current);
     for (int e=0; e<ELEMENTS; ++e){
+      (*printf_element[e])();
       printf("%3u    ", enemies[i].elemental_max[e].resistance);
       weakness[e] += enemies[i].health_current * enemies[i].elemental_max[e].resistance;
+      printf_reset();
     }
     printf("\n");
   }
@@ -106,7 +131,9 @@ int main(int argc, char* argv[]){
     printf("                    venus   mrcry    mars   jupiter\n");
     printf("Health*Resistances: ");
     for (int e=0; e<ELEMENTS; ++e){
+      (*printf_element[e])();
       printf("%5u   ", 100*weakness[e]/weakness_min);
+      printf_reset();
     }
     printf("   (normalized)\n\n");
   }
@@ -126,8 +153,24 @@ int main(int argc, char* argv[]){
   for (size_t a=0; a<ALLIES; ++a){
     printf("Character: %lu (%u djinn)\n", a, ed[a].quantity);
     for (size_t d=0; d<ed[a].quantity; ++d){
+      switch (ed[a].djinn[d].element){
+        case 0:
+          printf_yellow();
+          break;
+        case 1:
+          printf_blue();
+          break;
+        case 2:
+          printf_red();
+          break;
+        case 3:
+          printf_purple();
+          break;
+        default:
+          printf_reset();
+      }
       printf("  %s: %u\n", djinn_get_name(ed[a].djinn[d]), ed[a].djinn[d].status);
-    
+      printf_reset();
     }
   }
 
