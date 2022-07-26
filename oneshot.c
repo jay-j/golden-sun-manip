@@ -149,10 +149,26 @@ int main(int argc, char* argv[]){
   Export_Djinn_List ed[ALLIES];
   get_djinn(pid, wram_ptr, allies, ed);
   
-  printf("\nDJINN STATUSES:\n");
+  printf("\nALLY MENU:\n");
+  // character names
   for (size_t a=0; a<ALLIES; ++a){
-    printf("Character: %lu (%u djinn)\n", a, ed[a].quantity);
-    for (size_t d=0; d<ed[a].quantity; ++d){
+    printf("%24s", allies[a].name);
+  }
+  printf("\n");
+  
+  // djinn quantity
+  for (size_t a=0; a<ALLIES; ++a){
+    printf("%24u", ed[a].quantity);
+  }
+  printf("\n");
+
+
+  // actual djinn
+
+
+  // TODO generic djinn quantity
+  for (size_t d=0; d<7; ++d){
+    for (size_t a=0; a<ALLIES; ++a){
       switch (ed[a].djinn[d].element){
         case 0:
           printf_yellow();
@@ -169,9 +185,19 @@ int main(int argc, char* argv[]){
         default:
           printf_reset();
       }
-      printf("  %s: %u\n", djinn_get_name(ed[a].djinn[d]), ed[a].djinn[d].status);
+      printf("%19s: %3u", djinn_get_name(ed[a].djinn[d]), ed[a].djinn[d].status);
       printf_reset();
     }
+    printf("\n");
+  }
+    
+
+  printf("\nPsyenergies:\n");
+  for (size_t i=0; i<32; ++i){
+    for (size_t a=0; a<ALLIES; ++a){
+      printf("%24s", psyenergy_get_name(allies[a].psy[i]));
+    }
+    printf("\n");
   }
 
 
