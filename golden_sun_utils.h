@@ -235,4 +235,6 @@ void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_
 
 const char* djinn_get_name(Export_Djinn_Item djinn);
 
+const char* psyenergy_get_name(Psyenergy psy);
+
 #endif // header guards
