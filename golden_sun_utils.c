@@ -126,7 +126,9 @@ void golden_sun_print_unknowns(Unit* unit){
 uint32_t health_total(Unit* units, size_t n){
   uint32_t health = 0;
   for (size_t i=0; i<n; ++i){
-    health += units[i].health_current;
+    if (units[i].battle_status > 0){
+      health += units[i].health_current;
+    }
   }
   return health;
 }
@@ -299,7 +301,7 @@ uint8_t* find_wram(pid_t pid, uint64_t type){
   ssize_t n_read = process_vm_readv(pid, local, 1, remote, 1, 0);
   assert(n_read == 4);
 
-  printf("wram prediction: 0x%lx\n   ", mem_adr); 
+  // printf("wram prediction: 0x%lx\n   ", mem_adr); 
 
   uint8_t* game_ptr = (uint8_t*) mem_adr;
   printf("WRAM located at %p\n", game_ptr);
@@ -309,7 +311,7 @@ uint8_t* find_wram(pid_t pid, uint64_t type){
 
 
 // deconfuse djinn from wram, write it in a memory blob to send
-void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn){
+void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn_List* export_djinn){
 
   // look at characters to figure out how many djinn they have
   for (size_t i=0; i<ALLIES; ++i){
@@ -385,6 +387,7 @@ void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_d
   }
 
   // debug only - print the results!
+  /*
   for(size_t i=0; i<ALLIES; ++i){
     Unit* ally = allies+i;
     Export_Djinn_List* list = export_djinn+i;
@@ -393,6 +396,7 @@ void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_d
       printf("  djinn:%u   element:%u   status:%u\n", list->djinn[d].id, list->djinn[d].element, list->djinn[d].status);
     }
   }
+  */
 
 }
 
@@ -410,19 +414,6 @@ void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* action
   assert(n_read == remote[0].iov_len);
 }
 
-/*
-// convert gba-format action struct to minimal representation for ML in copy operation
-void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export){
-  for (size_t a=0; a<ALLIES; ++a){
-    actions_export[a].actor = actions_raw[a].actor_id;
-    actions_export[a].action_type = actions_raw[a].action_type;
-    actions_export[a].action_cmd = actions_raw[a].command;
-    actions_export[a].djinn_element = actions_raw[a].element;
-    actions_export[a].target = actions_raw[a].target;
-  }
-} 
-*/
-
 
 void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_chip, Battle_Menu_Navigation* info){
   info->menu_active = get_byte(pid, wram_ptr, MEMORY_OFFSET_BATTLE_MENU);
@@ -435,4 +426,211 @@ void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_
                         get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_DJINN_MAJOR);
   info->target = get_byte(pid, wram_ptr_chip, MEMORY_OFFSET_BATTLE_MENU_TARGET);
 
+}
+
+
+// TODO support TLA Djinn
+const char* djinn_get_name(Export_Djinn_Item djinn){
+
+  // index with (num_per_element)*element + num_within_element
+  const char* djinn_names[] = {"Flint", "Granite", "Quartz", "Vine", "Sap", "Ground", "Bane", 
+                               "Fizz", "Sleet", "Mist", "Spritz", "Hail", "Tonic", "Dew", 
+                               "Forge", "Fever", "Corona", "Scorch", "Ember", "Flash", "Torch",
+                               "Gust", "Breeze", "Zephyr", "Smog", "Kite", "Squall", "Luff"}; 
+  uint32_t id = djinn.id;
+  uint32_t djinn_per_element = 7;
+  
+  // convert binary id into sequential index
+  uint32_t index = 0;
+  while (id > 1){
+    id = id >> 1;
+    index += 1;
+  }
+  
+  // adjust index for the elements
+  index += djinn_per_element * djinn.element;
+  
+  // lookup and return the string
+  return djinn_names[index]; 
+}
+
+
+const char* psyenergy_get_name(Psyenergy psy){
+  
+  // TODO some colorization based on element
+
+  // psyenergy_names index based on psy.spell
+  char* pn[256];
+  pn[0x00] = "_";
+  pn[0x01] = "Attack";
+  pn[0x02] = "Defend";
+  
+  pn[0x03] = "Quake";
+  pn[0x04] = "Earthquake";
+  pn[0x05] = "Quake Sphere";
+  pn[0x06] = "Spire";
+  pn[0x07] = "Clay Spire";
+  pn[0x08] = "Stone Spire";
+  pn[0x09] = "Gaia";
+  pn[0x0A] = "Mother Gaia";
+  pn[0x0B] = "Grand Gaia";
+  pn[0x0C] = "Growth";
+  pn[0x0D] = "Mad Growth";
+  pn[0x0E] = "Wild Growth";
+  pn[0x0F] = "Thorn";
+  pn[0x10] = "Briar";
+  pn[0x11] = "Nettle";
+  
+  pn[0x18] = "Frost";
+  pn[0x19] = "Tundra";
+  pn[0x1A] = "Glaceir";
+  pn[0x1B] = "Ice";
+  pn[0x1C] = "Ice Horn";
+  pn[0x1D] = "Ice Missile";
+  pn[0x1E] = "Prism";
+  pn[0x1F] = "Hail Prism";
+  pn[0x20] = "Freeze Prism";
+  pn[0x21] = "Douse";
+  pn[0x22] = "Drench";
+  pn[0x23] = "Deluge";
+  pn[0x24] = "Froth";
+  pn[0x25] = "Froth Sphere";
+  pn[0x26] = "Froth Spiral";
+
+  pn[0x2D] = "Flare";
+  pn[0x2E] = "Flare Wall";
+  pn[0x2F] = "Flare Storm";
+  pn[0x30] = "Fire";
+  pn[0x31] = "Fireball";
+  pn[0x32] = "Inferno";
+  pn[0x33] = "Volcano";
+  pn[0x34] = "Eruption";
+  pn[0x35] = "Proclasm";
+  pn[0x36] = "Blast";
+  pn[0x37] = "Mad Blast";
+  pn[0x38] = "Fiery Blast";
+  pn[0x39] = "Blast";
+  pn[0x3A] = "Nova";
+  pn[0x3B] = "Supernova";
+  
+  
+  pn[0x42] = "Bolt";
+  pn[0x43] = "Flash Bolt";
+  pn[0x44] = "Blue Bolt";
+  pn[0x45] = "Ray";
+  pn[0x46] = "Storm Ray";
+  pn[0x47] = "Destruct Ray";
+  pn[0x48] = "Plasma";
+  pn[0x49] = "Shine Plasma";
+  pn[0x4A] = "Spark Plasma";
+  pn[0x4B] = "Slash";
+  pn[0x4C] = "Wind Slash";
+  pn[0x4D] = "Sonic Slash";
+  pn[0x4E] = "Whirlwind";
+  pn[0x4F] = "Tornado";
+  pn[0x50] = "Tempest";
+
+  pn[0x5A] = "Cure";
+  pn[0x5B] = "Cure Well";
+  pn[0x5C] = "Potent Cure";
+  pn[0x5D] = "Ply";
+  pn[0x5E] = "Ply Well";
+  pn[0x5F] = "Pure Ply";
+  pn[0x60] = "Wish";
+  pn[0x61] = "Wish Well";
+  pn[0x62] = "Pure Wish";
+  pn[0x63] = "Cure Poison";
+  pn[0x64] = "Restore";
+  pn[0x65] = "Revive";
+  pn[0x66] = "Impact";
+  pn[0x67] = "High Impact";
+  pn[0x68] = "Dull";
+
+  pn[0x69] = "Blunt";
+  pn[0x6A] = "Guard";
+  pn[0x6B] = "Protect";
+  pn[0x6C] = "Impair";
+  pn[0x6D] = "Debilitate";
+  pn[0x6E] = "Ward";
+  pn[0x6F] = "Resist";
+  pn[0x70] = "Weaken";
+  pn[0x71] = "Enfeeble";
+  pn[0x72] = "Taint";
+  pn[0x73] = "Poison";
+  pn[0x74] = "Delude";
+  pn[0x75] = "Confuse";
+  pn[0x76] = "Charm";
+  pn[0x77] = "Paralyze";
+  
+  pn[0x78] = "Sleep"; 
+  pn[0x79] = "Bind"; 
+  pn[0x7A] = "Haunt"; 
+  pn[0x7B] = "Curse"; 
+  pn[0x7C] = "Condem"; 
+  pn[0x7D] = "Drain"; 
+  pn[0x7E] = "Psy Drain"; 
+  pn[0x7F] = "Break"; 
+  pn[0x80] = "Regenerate"; 
+  pn[0x81] = "Reflect"; 
+
+  pn[0x8C] = "Move"; 
+  pn[0x8D] = "Mind Read"; 
+  pn[0x8E] = "Force"; 
+  pn[0x8F] = "Lift"; 
+  pn[0x90] = "Reveal"; 
+  pn[0x91] = "Halt"; 
+  pn[0x92] = "Cloak"; 
+  pn[0x93] = "Carry"; 
+  pn[0x94] = "Catch"; 
+  pn[0x95] = "Retreat"; 
+  pn[0x96] = "Avoid"; 
+
+  pn[0xA0] = "Dragon Cloud"; 
+  pn[0xA1] = "Demon Night"; 
+  pn[0xA2] = "Helm Splitter"; 
+  pn[0xA3] = "Quick Strike"; 
+  pn[0xA4] = "Rockfall"; 
+  pn[0xA5] = "Rockslide"; 
+  pn[0xA6] = "Avalanche"; 
+  pn[0xA7] = "Lava Shower"; 
+  pn[0xA8] = "Molten Bath"; 
+  pn[0xA9] = "Magama Storm"; 
+  pn[0xAA] = "Demon Spear"; 
+
+  pn[0xAB] = "Angel Spear"; 
+  pn[0xAC] = "Guardian"; 
+  pn[0xAD] = "Protector"; 
+  pn[0xAE] = "Magic Shell"; 
+  pn[0xAF] = "Magic Shield"; 
+  pn[0xB0] = "Death Plunge"; 
+  pn[0xB1] = "Shuriken"; 
+  pn[0xB2] = "Annihilation"; 
+  pn[0xB3] = "Punji"; 
+  pn[0xB4] = "Punji Trap"; 
+
+  pn[0xB5] = "Punji Strike"; 
+  pn[0xB6] = "Fire Bomb"; 
+  pn[0xB7] = "Cluster Bomb"; 
+  pn[0xB8] = "Carpet Bomb"; 
+  pn[0xB9] = "Gale"; 
+  pn[0xBA] = "Typhoon"; 
+  pn[0xBB] = "Hurricane"; 
+  pn[0xBC] = "Thunderclap";
+
+  pn[0xBD] = "Thunderbolt"; 
+  pn[0xBE] = "Thunderstorm"; 
+  pn[0xBF] = "Mist"; 
+  pn[0xC0] = "Ragnarok"; 
+  pn[0xC1] = "Cutting Edge"; 
+  pn[0xC2] = "Heat Wave"; 
+  pn[0xC3] = "Astral Blast"; 
+  pn[0xC4] = "Planet Diver"; 
+  
+  
+  if (pn[psy.spell] == NULL){
+    psy.spell = 0;
+  }
+
+  return pn[psy.spell];
+  
 }

@@ -55,6 +55,29 @@ void print_battle_action_unknowns(Battle_Action* action){
 }
 
 
+void printf_red(){
+  printf("\033[0;31m");
+}
+
+void printf_yellow(){
+  printf("\033[0;33m");
+}
+
+void printf_purple(){
+  printf("\033[0;35m");
+}
+
+void printf_blue(){
+  printf("\033[0;34m");
+}
+
+void printf_reset(){
+  printf("\033[0m");
+}
+
+// array to help with element printing
+void (*printf_element[])() = {printf_yellow, printf_blue, printf_red, printf_purple};
+
 int main(int argc, char* argv[]){
 
   // printf("character array is size.... %ld\n", sizeof(Unit));
@@ -87,12 +110,15 @@ int main(int argc, char* argv[]){
     }
     printf("%12s \thealth: %u \tresistances: ", enemies[i].name, enemies[i].health_current);
     for (int e=0; e<ELEMENTS; ++e){
+      (*printf_element[e])();
       printf("%3u    ", enemies[i].elemental_max[e].resistance);
       weakness[e] += enemies[i].health_current * enemies[i].elemental_max[e].resistance;
+      printf_reset();
     }
     printf("\n");
   }
   printf("\n");
+  printf("enemy health sum: %u\n", health_total(enemies, 5));
 
   // figure out which element is weakest
   for (int e=0; e<ELEMENTS; ++e){
@@ -101,12 +127,16 @@ int main(int argc, char* argv[]){
     }
   }
 
-  printf("                    venus   mrcry    mars   jupiter\n");
-  printf("Health*Resistances: ");
-  for (int e=0; e<ELEMENTS; ++e){
-    printf("%5u   ", 100*weakness[e]/weakness_min);
+  if (health_total(enemies, 5) > 0){
+    printf("                    venus   mrcry    mars   jupiter\n");
+    printf("Health*Resistances: ");
+    for (int e=0; e<ELEMENTS; ++e){
+      (*printf_element[e])();
+      printf("%5u   ", 100*weakness[e]/weakness_min);
+      printf_reset();
+    }
+    printf("   (normalized)\n\n");
   }
-  printf("   (normalized)\n\n");
 
   //printf("isaac unknown stuff\n");
   //golden_sun_print_unknowns(allies);
@@ -116,20 +146,71 @@ int main(int argc, char* argv[]){
   printf("Battle menu state? %u   Character: %u\n", info.menu_active, info.character);
   printf("L0: %u   L1: %u   L2: %u   L2_djinn: %u   Target: %u\n", info.menu_l0, info.menu_l1, info.menu_l2, info.menu_l2_djinn, info.target);
 
-  Export_Djinn ed;
+  Export_Djinn_List ed[ALLIES];
   get_djinn(pid, wram_ptr, allies, ed);
+  
+  printf("\nALLY MENU:\n");
+  // character names
+  for (size_t a=0; a<ALLIES; ++a){
+    printf("%24s", allies[a].name);
+  }
+  printf("\n");
+  
+  // djinn quantity
+  for (size_t a=0; a<ALLIES; ++a){
+    printf("%24u", ed[a].quantity);
+  }
+  printf("\n");
+
+
+  // actual djinn
+
+
+  // TODO generic djinn quantity
+  for (size_t d=0; d<7; ++d){
+    for (size_t a=0; a<ALLIES; ++a){
+      switch (ed[a].djinn[d].element){
+        case 0:
+          printf_yellow();
+          break;
+        case 1:
+          printf_blue();
+          break;
+        case 2:
+          printf_red();
+          break;
+        case 3:
+          printf_purple();
+          break;
+        default:
+          printf_reset();
+      }
+      printf("%19s: %3u", djinn_get_name(ed[a].djinn[d]), ed[a].djinn[d].status);
+      printf_reset();
+    }
+    printf("\n");
+  }
+    
+
+  printf("\nPsyenergies:\n");
+  for (size_t i=0; i<32; ++i){
+    for (size_t a=0; a<ALLIES; ++a){
+      printf("%24s", psyenergy_get_name(allies[a].psy[i]));
+    }
+    printf("\n");
+  }
+
 
   Battle_Action actions[BATTLE_ACTION_QUEUE_MAX_LENGTH];
   get_battle_action_queue(pid, wram_ptr, actions);
 
+  /*
   for(size_t i=0; i<BATTLE_ACTION_QUEUE_MAX_LENGTH; ++i){
     printf("Character: %u \tAction: 0x%02x %02x \tTarget: 0x%02x (falloff %02x)\tDjinn Element: %u  \t ", 
        actions[i].actor_id, actions[i].action_type, actions[i].command, actions[i].target, actions[i].falloff, actions[i].element);
     print_battle_action_unknowns(actions+i);
   }
-
-  uint8_t ready = get_battle_menu(actions);
-  printf("Battle menu? %u\n", ready);
+  */
 
   return 0;
 }

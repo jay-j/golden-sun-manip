@@ -176,7 +176,7 @@ typedef struct __attribute__((__packed__)) Export_Djinn_List{
 } Export_Djinn_List;
 
 // a djinn list for every character
-typedef Export_Djinn_List Export_Djinn[ALLIES];
+// typedef Export_Djinn_List Export_Djinn[ALLIES];
 
 typedef struct __attribute__((__packed__)) ExportAction {
   uint8_t actor;
@@ -201,7 +201,7 @@ typedef struct __attribute__((__packed__)) Battle_Menu_Navigation {
 typedef struct __attribute__((__packed__)) ML_Observation_Space {
   ExportAlly allies[ALLIES];
   ExportEnemy enemies[ENEMIES_MAX];
-  Export_Djinn_List djinn;
+  Export_Djinn_List djinn[ALLIES];
   Battle_Menu_Navigation menu_nav;
 } ML_Observation_Space;
 
@@ -213,7 +213,7 @@ typedef struct __attribute__((__packed__)) ML_Action_Space {
   int8_t button_a;
 } ML_Action_Space;
 
-void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn export_djinn);
+void get_djinn(pid_t pid, uint8_t* wram_ptr, Unit* allies, Export_Djinn_List* export_djinn);
 
 
 // todo write unknowns array. with memory pointer offset and number of bytes. so I can just loop through all of them.
@@ -232,5 +232,9 @@ void get_battle_action_queue(pid_t pid, uint8_t* wram_ptr, Battle_Action* action
 void export_action_state(Battle_Action* actions_raw, ExportAction* actions_export);
 
 void get_battle_menu_navigation(pid_t pid, uint8_t* wram_ptr, uint8_t* wram_ptr_chip, Battle_Menu_Navigation* info);
+
+const char* djinn_get_name(Export_Djinn_Item djinn);
+
+const char* psyenergy_get_name(Psyenergy psy);
 
 #endif // header guards

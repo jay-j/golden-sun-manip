@@ -9,6 +9,12 @@ long get_time_ms(){
 	return (long) get_time_us() / 1e3;
 }
 
+long get_time_sec(){
+	struct timeval currentTime;
+	gettimeofday(&currentTime, NULL); // seconds since UTC Epoch start
+	return (long) currentTime.tv_sec;
+}
+
 void loop_frequency_delay(struct LoopTimeManagement* timer){
 	// get the current time
 	long now = get_time_us();
