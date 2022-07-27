@@ -16,7 +16,8 @@ clock = pygame.time.Clock()
 # init zmq comms
 context = zmq.Context()
 socket = context.socket(zmq.PUSH)
-socket.connect("tcp://192.168.50.119:5555")
+# socket.connect("tcp://192.168.50.119:5555")
+socket.connect("tcp://192.168.50.207:5555")
 print("connection opened")
 
 
@@ -49,7 +50,8 @@ while run:
 
     if anything_pushed:
         message[buttonlist["anything"]] = 1
-    #print(f"Trying to send message: {message}")
+        print(f"New push, send message: {message}")
+
     socket.send(message)
 
     dt = clock.tick(30) # 30 = 30fps
