@@ -282,7 +282,7 @@ int main(int argc, char* argv[]){
 
       // need to advance to commanding the first character
       if (observation_space.menu_nav.menu_l0 == 240){
-        if (get_time_ms() - last_a_press > 100){
+        if (get_time_ms() - last_a_press > 200){
           printf("push A\n");
           key_tap(display, XK_k);
           last_a_press = get_time_ms();
