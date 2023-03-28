@@ -337,3 +337,12 @@ And the major count of djinn gives memory address 0x6c770e8. That is chip_wram +
 Finally, the target selection is at 0x6c770dc. That is chip_wram + 0x7C8C.
 
 Success.
+
+# Finding Stuff in 0x80; the Game Pak
+Yes, I am finding this spelling is consistent across sources.
+https://problemkaputt.de/gbatek.htm#gbamemorymap
+
+Searching for byte list 00 01 02 03 05 leads to 0x06EDEB3C
+This is wram + 0x75153C - that is ~7.6 MB after the start of WRAM, but WRAM is only 256 KB. So definitely in a different memory region.
+
+
